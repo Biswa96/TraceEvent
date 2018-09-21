@@ -12,7 +12,7 @@ Download the executable from [Release Page][2]. Run this program as administrato
 
 ### Start a session
 
-Run this command as administrator: `TraceEvent.exe start <Session Name> <Event Provider GUID>`. Always use an unique session name otherwise this will show error. Event provider GUIDs can be found from this Powershell cmdlet: `Get-EtwTraceProvider`. Also the [TraceLog tool][3] from Windows Driver Kit provides a list of those GUIDs and the required command: `tracelog -enumguid`. **Always use curly brackets** to specify GUID strings. Find more GUID in [Event Providers list](Event_Providers.md). For example: `TraceEvent.exe start MyTrace {12345678-1234-1234-1234-123457890ABCD}`
+Run this command as administrator: `TraceEvent.exe start <Session Name> <Event Provider GUID>`. Always use an unique session name otherwise this will show error. Event provider GUIDs can be found from this Powershell cmdlet: `Get-EtwTraceProvider`. Also the [TraceLog tool][3] from Windows Driver Kit provides a list of those GUIDs and the required command: `tracelog -enumguid`. **Always use curly brackets** to specify GUID strings. Find more GUIDs in [**Event Providers list**](Event_Providers.md). For example: `TraceEvent.exe start MyTrace {12345678-1234-1234-1234-123457890ABCD}`
 
 ### Log events from a session
 
@@ -28,10 +28,15 @@ Clone this repository with `git clone https://github.com/Biswa96/TraceEvent.git`
 
 makefile will be added soon. 
 
+## Known issues
+
+* There are some logging format issue with the Event Providers from Explorer.exe. To view those use TraceLog.exe or TraceFmt.exe from Windows Driver Kit. Use event providers from Explorer.exe carefully. 
+
 ## Further Readings
 
 * [Event Tracing for Windows (ETW)][5]
 * [Retrieving Event Data Using TDH][6]
+* [Configuring and Starting an Event Tracing Session][7]
 
 ## License
 
@@ -62,5 +67,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 [4]: https://docs.microsoft.com/en-us/windows/desktop/etw/logging-mode-constants
 [5]: https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-
 [6]: https://docs.microsoft.com/en-us/windows/desktop/etw/retrieving-event-data-using-tdh
+[7]: https://docs.microsoft.com/en-us/windows/desktop/etw/configuring-and-starting-an-event-tracing-session
 
 <!-- END of README -->
