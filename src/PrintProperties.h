@@ -1,9 +1,7 @@
 #ifndef PRINTPROPERTIES_H
 #define PRINTPROPERTIES_H
 
-#include "Functions.h"
-#include <evntrace.h>
-
-void PrintTraceProperties(PEVENT_TRACE_PROPERTIES Properties);
+void PrintTraceProperties(
+    struct _EVENT_TRACE_PROPERTIES_V2* Properties);
 
 #endif //PRINTPROPERTIES_H

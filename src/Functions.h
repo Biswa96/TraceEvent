@@ -1,14 +1,23 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include <Windows.h>
+#include <wchar.h>
 
-#define GUID_STRING 40
-#define MsgSize 0x400
+#define GUID_STRING 128u
 
-BOOL guid_from_string(PWCHAR s, GUID* id);
-void PrintGuid(GUID* id, PWCHAR string);
-void GetFormattedMessage(ULONG result);
-void Usage(PWCHAR prog);
+int guid_from_string(
+    wchar_t* s,
+    struct _GUID* id);
+
+void PrintGuid(
+    struct _GUID* id,
+    wchar_t* string);
+
+void Log(
+    unsigned long Result,
+    wchar_t* Function);
+
+void Usage(
+    void);
 
 #endif //FUNCTIONS_H

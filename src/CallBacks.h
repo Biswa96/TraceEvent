@@ -1,10 +1,10 @@
 #ifndef CALLBACKS_H
 #define CALLBACKS_H
 
-#include <windows.h>
-#include <tdh.h>
+void EventRecordCallback(
+    struct _EVENT_RECORD* eRecord);
 
-void EventRecordCallback(PEVENT_RECORD EventRecord);
-ULONG BufferCallback(PEVENT_TRACE_LOGFILEW Buffer);
+unsigned long BufferCallback(
+    struct _EVENT_TRACE_LOGFILEW* Buffer);
 
 #endif //CALLBACKS_H

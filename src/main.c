@@ -1,47 +1,93 @@
-#define _CRT_SECURE_NO_WARNINGS
+#include <Windows.h>
+#include "Functions.h"
 #include "TraceEvent.h"
 #include <stdio.h>
+#include "wgetopt.h"
 
 int main(void)
 {
     int wargc;
-    PWCHAR* wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+    PWSTR* wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
 
-    if (wargc < 3)
+    if (wargc < 2)
     {
         wprintf(
             L"Provide a valid option and agrument.\n"
-            L"Try \"TraceEvent.exe help command\" for more information.\n");
+            L"Try 'TraceEvent.exe --help' for more information.\n");
         return 0;
     }
 
-    if (!wcscmp(L"start", wargv[1]))
-    {
-        GUID ProviderID;
+    int c, bRes;
+    GUID ProviderID = { 0 };
+    BOOLEAN Start = FALSE;
+    PWSTR LoggerName = NULL;
 
-        if (guid_from_string(wargv[3], &ProviderID))
-            StartSession(wargv[2], ProviderID);
+    /* Option Table */
+    const struct option OptionTable[] = {
+        { L"guid",          required_argument,   0,  'g' },
+        { L"help",          no_argument,         0,  'h' },
+        { L"list",          no_argument,         0,  'L' },
+        { L"log",           required_argument,   0,  'l' },
+        { L"query",         required_argument,   0,  'q' },
+        { L"start",         required_argument,   0,  'S' },
+        { L"stop",          required_argument,   0,  's' },
+        { 0,                no_argument,         0,   0  },
+    };
+
+    /* Option parsing */
+    while ((c = wgetopt_long(wargc, wargv, L"g:hLl:q:S:s:", OptionTable, 0)) != -1)
+    {
+        switch (c)
+        {
+        case 0:
+            wprintf(L"Try 'TraceEvent.exe --help' for more information.\n");
+            Usage();
+            break;
+
+        case 'g':
+            bRes = guid_from_string(optarg, &ProviderID);
+            if (!bRes)
+            {
+                ProviderID = (GUID){ 0 };
+                wprintf(L"Enter Provider GUID correctly\n");
+            }
+            break;
+
+        case 'L':
+            ListSessions();
+            break;
+
+        case 'l':
+            ConsumeEvent(optarg);
+            break;
+
+        case 'q':
+            QuerySession(optarg);
+            break;
+
+        case 'S':
+            LoggerName = optarg;
+            Start = TRUE;
+            break;
+
+        case 's':
+            StopSession(optarg);
+            break;
+
+        case 'h':
+            Usage();
+            break;
+
+        default:
+            wprintf(L"Try 'TraceEvent.exe --help' for more information.\n");
+        }
+    }
+
+    if (Start)
+    {
+        if (ProviderID.Data1 && ProviderID.Data4)
+            StartSession(LoggerName, &ProviderID);
         else
-            wprintf(L"Enter Provider GUID correctly\n");
-
-        return 0;
-    }
-    else if (!wcscmp(L"log", wargv[1]))
-    {
-        ConsumeEvent(wargv[2]);
-    }
-    else if (!wcscmp(L"stop", wargv[1]))
-    {
-        StopSession(wargv[2]);
-    }
-    else if (!wcscmp(L"help", wargv[1]))
-    {
-        Usage(wargv[0]);
-    }
-    else
-    {
-        wprintf(
-            L"Not a valid option or argument.\n"
-            L"Try \"TraceEvent.exe help command\" for more information.\n");
+            wprintf(L"Event Provider GUID is not added, use '--guid' option to add.\n");
     }
 }

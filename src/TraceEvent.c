@@ -1,105 +1,159 @@
-#include "TraceEvent.h"
+#include <windows.h>
+#include <tdh.h>
+#include "CallBacks.h"
+#include "PrintProperties.h"
+#include "Functions.h"
 #include <stdio.h>
 
-#define MAX_LOGGER_SIZE 0x400
-static const ULONG BufferSize = sizeof(EVENT_TRACE_PROPERTIES) + MAX_LOGGER_SIZE * sizeof(WCHAR);
+#define EtwpMaxLoggers 64
+#define MAX_LOGGER_SIZE (1024 * sizeof(wchar_t))
+#define MAX_LOGFILE_SIZE (1024 * sizeof(wchar_t))
 
-ULONG StartSession(PWCHAR LoggerName, GUID ProviderID)
+static const size_t BufferSize = sizeof(EVENT_TRACE_PROPERTIES_V2) + MAX_LOGGER_SIZE;
+
+unsigned long StartSession(
+    wchar_t* LoggerName,
+    struct _GUID* ProviderID)
 {
-    ULONG result;
-    TRACEHANDLE hTrace;
-    WCHAR Guid[GUID_STRING];
-
-    PEVENT_TRACE_PROPERTIES Properties = (PEVENT_TRACE_PROPERTIES)malloc(BufferSize);
+    PEVENT_TRACE_PROPERTIES_V2 Properties = malloc(BufferSize);
     memset(Properties, 0, BufferSize);
-    Properties->Wnode.BufferSize = BufferSize;
-    Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID;
+    Properties->Wnode.BufferSize = (ULONG)BufferSize;
+    Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
     Properties->LogFileMode = EVENT_TRACE_REAL_TIME_MODE;
-    Properties->LoggerNameOffset = sizeof(EVENT_TRACE_PROPERTIES);
+    Properties->LoggerNameOffset = sizeof(EVENT_TRACE_PROPERTIES_V2);
 
-    result = StartTraceW(&hTrace, LoggerName, Properties);
-    if (result)
+    TRACEHANDLE TraceHandle = 0;
+    ULONG result = StartTraceW(
+        &TraceHandle,
+        LoggerName,
+        (PEVENT_TRACE_PROPERTIES)Properties);
+
+    if (result == ERROR_SUCCESS)
+    {
+        wprintf(L"Logger Started...\nEnabling \"%ls\" to logger %I64d\n",
+            (PWCHAR)((PBYTE)Properties + Properties->LoggerNameOffset), TraceHandle);
+        Log(result, L"StartTraceW Status:     ");
+    }
+    else
     {
         wprintf(
             L"Could not start \"%ls\" to logger\n",
             (PWCHAR)((PBYTE)Properties + Properties->LoggerNameOffset));
-        GetFormattedMessage(result);
-    }
-    else
-    {
-        wprintf(L"Logger Started...\nEnabling \"%ls\" to logger %I64d\n",
-            (PWCHAR)((PBYTE)Properties + Properties->LoggerNameOffset), hTrace);
-        GetFormattedMessage(result);
+        Log(result, L"StartTraceW Status:     ");
     }
 
     result = EnableTraceEx2(
-        hTrace, &ProviderID, EVENT_CONTROL_CODE_ENABLE_PROVIDER,
+        TraceHandle, ProviderID, EVENT_CONTROL_CODE_ENABLE_PROVIDER,
         TRACE_LEVEL_VERBOSE, 0, 0, 0, NULL);
-    if (result)
-    {
-        wprintf(L"ERROR: Failed to enable Guid: ");
-        PrintGuid(&ProviderID, Guid);
-        wprintf(L"%ls\n", &Guid);
-    }
-    else
+    if (result == ERROR_SUCCESS)
     {
         wprintf(L"Enabled logger...\n");
         PrintTraceProperties(Properties);
+    }
+    else
+    {
+        WCHAR Guid[GUID_STRING];
+        wprintf(L"ERROR: Failed to enable Guid: ");
+        PrintGuid(ProviderID, Guid);
+        wprintf(L"%ls\n", &Guid);
     }
 
     free(Properties);
     return result;
 }
 
-ULONG ConsumeEvent(PWCHAR LoggerName)
+unsigned long ConsumeEvent(
+    wchar_t* LoggerName)
 {
-    ULONG result;
-    TRACEHANDLE hTrace;
-
     EVENT_TRACE_LOGFILEW LogFile = { 0 };
     LogFile.LoggerName = LoggerName;
     LogFile.EventRecordCallback = (PEVENT_RECORD_CALLBACK)EventRecordCallback;
     LogFile.BufferCallback = (PEVENT_TRACE_BUFFER_CALLBACKW)BufferCallback;
-    LogFile.LogFileMode = EVENT_TRACE_REAL_TIME_MODE | EVENT_TRACE_NO_PER_PROCESSOR_BUFFERING;
+    LogFile.ProcessTraceMode = PROCESS_TRACE_MODE_REAL_TIME | PROCESS_TRACE_MODE_EVENT_RECORD;
 
-    hTrace = OpenTraceW(&LogFile);
-    if (hTrace == (TRACEHANDLE)INVALID_HANDLE_VALUE)
+    TRACEHANDLE TraceHandle = OpenTraceW(&LogFile);
+    if (TraceHandle == (TRACEHANDLE)INVALID_HANDLE_VALUE)
     {
-        result = GetLastError();
-        wprintf(L"OpenTrace Error: %lu\n", result);
-        GetFormattedMessage(result);
+        Log(GetLastError(), L"OpenTraceW Status:      ");
         return 0;
     }
 
-    result = ProcessTrace(&hTrace, 1, 0, 0);
-    if (result)
-    {
-        wprintf(L"ProcessTrace Error: %lu\n", result);
-        GetFormattedMessage(result);
-    }
+    ULONG result = ProcessTrace(&TraceHandle, 1, NULL, NULL);
+    if (result != ERROR_SUCCESS)
+        Log(result, L"ProcessTrace Status:    ");
 
     return result;
 }
 
-ULONG StopSession(PWCHAR LoggerName)
+unsigned long StopSession(
+    wchar_t* LoggerName)
 {
-    PEVENT_TRACE_PROPERTIES Properties = (PEVENT_TRACE_PROPERTIES)malloc(BufferSize);
+    PEVENT_TRACE_PROPERTIES_V2 Properties = malloc(BufferSize);
     memset(Properties, 0, BufferSize);
-    Properties->Wnode.BufferSize = BufferSize;
+    Properties->Wnode.BufferSize = (ULONG)BufferSize;
+    Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
 
-    ULONG result = ControlTraceW((TRACEHANDLE)NULL, LoggerName, Properties, EVENT_TRACE_CONTROL_STOP);
-    if (result == 0)
+    ULONG result = ControlTraceW(
+        (TRACEHANDLE)NULL,
+        LoggerName,
+        (PEVENT_TRACE_PROPERTIES)Properties,
+        EVENT_TRACE_CONTROL_STOP);
+
+    Log(result, L"ControlTraceW Status:   ");
+    if (result == ERROR_SUCCESS)
     {
         wprintf(L"\"%ls\" session stopped succesfully\n",
             (PWCHAR)((PBYTE)Properties + Properties->LoggerNameOffset));
         PrintTraceProperties(Properties);
     }
-    else
-    {
-        wprintf(L"ControlTraceW Error: %ld\n", result);
-        GetFormattedMessage(result);
-    }
 
     free(Properties);
     return result;
+}
+
+unsigned long QuerySession(
+    wchar_t* LoggerName)
+{
+    PEVENT_TRACE_PROPERTIES_V2 Properties = malloc(BufferSize);
+    memset(Properties, 0, BufferSize);
+    Properties->Wnode.BufferSize = (ULONG)BufferSize;
+    Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
+
+    ULONG result = ControlTraceW(
+        (TRACEHANDLE)NULL,
+        LoggerName,
+        (PEVENT_TRACE_PROPERTIES)Properties,
+        EVENT_TRACE_CONTROL_QUERY);
+
+    Log(result, L"ControlTraceW Status:   ");
+    if (result == ERROR_SUCCESS)
+        PrintTraceProperties(Properties);
+
+    free(Properties);
+    return result;
+}
+
+void ListSessions(
+    void)
+{
+    ULONG result = 0;
+    PEVENT_TRACE_PROPERTIES_V2 Properties = malloc(sizeof(*Properties));
+
+    for (int i = 0; i < EtwpMaxLoggers; i++)
+    {
+        memset(Properties, 0, sizeof(*Properties));
+        Properties->Wnode.BufferSize = (ULONG)sizeof(*Properties);
+
+        result = ControlTraceW(
+            (TRACEHANDLE)i,
+            NULL,
+            (PEVENT_TRACE_PROPERTIES)Properties,
+            EVENT_TRACE_CONTROL_QUERY);
+
+        if (!result || result == ERROR_MORE_DATA)
+            PrintTraceProperties(Properties);
+        i++;
+    };
+
+    free(Properties);
 }

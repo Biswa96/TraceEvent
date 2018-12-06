@@ -1,123 +1,126 @@
-#include "CallBacks.h"
+#include <windows.h>
+#include <tdh.h>
 #include <stdio.h>
 
-void RemoveTrailingSpace(PEVENT_MAP_INFO mapInfo)
+#define LODWORD(x) ((DWORD)(x))
+#define HIDWORD(x) ((DWORD)(((x) >> 32) & 0xffffffff))
+
+void RemoveTrailingSpace(
+    PEVENT_MAP_INFO EventMapInfo)
 {
     size_t ByteLength = 0;
 
-    for (DWORD i = 0; i < mapInfo->EntryCount; i++)
+    for (DWORD i = 0; i < EventMapInfo->EntryCount; i++)
     {
-        ByteLength = (wcslen((PWCHAR)((PBYTE)mapInfo + mapInfo->MapEntryArray[i].OutputOffset)) - 1) * 2;
-        *((PWCHAR)((PBYTE)mapInfo + (mapInfo->MapEntryArray[i].OutputOffset + ByteLength))) = L'\0';
+        ByteLength = (wcslen((PWCHAR)((PBYTE)EventMapInfo + EventMapInfo->MapEntryArray[i].OutputOffset)) - 1) * sizeof(wchar_t);
+        *((PWCHAR)((PBYTE)EventMapInfo + (EventMapInfo->MapEntryArray[i].OutputOffset + ByteLength))) = L'\0';
     }
 }
 
 void GetMapInfo(
-    _In_ PEVENT_RECORD eRecord,
-    _In_ PWCHAR MapName,
-    _In_ ULONG DecodingSource,
-    _Out_ PEVENT_MAP_INFO mapInfo)
+    PEVENT_RECORD EventRecord,
+    PWCHAR MapName,
+    ULONG DecodingSource,
+    PEVENT_MAP_INFO EventMapInfo)
 {
-    ULONG result, size = 0;
+    ULONG MapSize = 0;
+    ULONG result = TdhGetEventMapInformation(EventRecord, MapName, EventMapInfo, &MapSize);
+    EventMapInfo = malloc(MapSize);
+    result = TdhGetEventMapInformation(EventRecord, MapName, EventMapInfo, &MapSize);
 
-    result = TdhGetEventMapInformation(eRecord, MapName, mapInfo, &size);
-    mapInfo = (PEVENT_MAP_INFO)malloc(size);
-    result = TdhGetEventMapInformation(eRecord, MapName, mapInfo, &size);
-
-    if (result == 0)
+    if (result == ERROR_SUCCESS)
     {
         if (DecodingSource == DecodingSourceXMLFile)
-            RemoveTrailingSpace(mapInfo);
+            RemoveTrailingSpace(EventMapInfo);
     }
 }
 
-//Event Providers use EventWriteTransfer function
-void EventRecordCallback(PEVENT_RECORD eRecord)
+// Event Providers use EventWriteTransfer function
+void EventRecordCallback(
+    struct _EVENT_RECORD* EventRecord)
 {
-    ULONG result, size = 0;
-    PTRACE_EVENT_INFO eInfo = NULL;
-    PEVENT_MAP_INFO mapInfo = NULL;
-
-    PBYTE EndOfUserData = (PBYTE)eRecord->UserData + eRecord->UserDataLength;
-    PBYTE UserData = (PBYTE)eRecord->UserData;
+    PEVENT_MAP_INFO EventMapInfo = NULL;
+    PBYTE EndOfUserData = (PBYTE)EventRecord->UserData + EventRecord->UserDataLength;
+    PBYTE UserData = (PBYTE)EventRecord->UserData;
     ULONG FormattedDataSize = 0;
     PWCHAR FormattedData = NULL;
     USHORT UserDataConsumed = 0;
 
-    //Verbose Event Header Information
+    // Verbose Event Header Information
     FILETIME ft;
     SYSTEMTIME st;
 
-    ft.dwHighDateTime = eRecord->EventHeader.TimeStamp.HighPart;
-    ft.dwLowDateTime = eRecord->EventHeader.TimeStamp.LowPart;
+    ft.dwHighDateTime = EventRecord->EventHeader.TimeStamp.HighPart;
+    ft.dwLowDateTime = EventRecord->EventHeader.TimeStamp.LowPart;
     FileTimeToSystemTime(&ft, &st);
 
     wprintf(L"%02d/%02d/%04d-%02d:%02d:%02d.%03d :: "
         L"ThreadID: %ld ProcessID: %ld\n",
         st.wMonth, st.wDay, st.wYear,
         st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-        eRecord->EventHeader.ThreadId,
-        eRecord->EventHeader.ProcessId);
+        EventRecord->EventHeader.ThreadId,
+        EventRecord->EventHeader.ProcessId);
 
-    //Get Event Information
-    result = TdhGetEventInformation(eRecord, 0, NULL, NULL, &size);
-    eInfo = (PTRACE_EVENT_INFO)malloc(size);
-    result = TdhGetEventInformation(eRecord, 0, NULL, eInfo, &size);
-    if (result != 0)
+    // Get Event Information
+    ULONG size = 0;
+    ULONG result = TdhGetEventInformation(EventRecord, 0, NULL, NULL, &size);
+    PTRACE_EVENT_INFO EventInfo = malloc(size);
+    result = TdhGetEventInformation(EventRecord, 0, NULL, EventInfo, &size);
+    if (result != ERROR_SUCCESS)
     {
         wprintf(L"TdhGetEventInformation Error: %ld\n", result);
         return;
     }
 
-    //Print Event Information: Provider Name and Task Name
-    if (eInfo->ProviderNameOffset > 0)
-        wprintf(L"[%ls] ", (PWCHAR)((PBYTE)(eInfo) + eInfo->ProviderNameOffset));
-    if (eInfo->TaskNameOffset > 0)
-        wprintf(L"%ls ", (PWCHAR)((PBYTE)(eInfo) + eInfo->TaskNameOffset));
+    // Print Event Information: Provider Name and Task Name
+    if (EventInfo->ProviderNameOffset > 0)
+        wprintf(L"[%ls] ", (PWCHAR)((PBYTE)(EventInfo) +EventInfo->ProviderNameOffset));
+    if (EventInfo->TaskNameOffset > 0)
+        wprintf(L"%ls ", (PWCHAR)((PBYTE)(EventInfo) +EventInfo->TaskNameOffset));
 
-    //Print Event Property: Property Name and Property Data
-    if (eInfo->TopLevelPropertyCount > 0)
+    // Print Event Property: Property Name and Property Data
+    if (EventInfo->TopLevelPropertyCount > 0)
     {
-        for (ULONG i = 0; i < eInfo->TopLevelPropertyCount; i++)
+        for (ULONG i = 0; i < EventInfo->TopLevelPropertyCount; i++)
         {
             wprintf(L"%ls:",
-                (PWCHAR)((PBYTE)(eInfo) + eInfo->EventPropertyInfoArray[i].NameOffset));
+                (PWCHAR)((PBYTE)(EventInfo) +EventInfo->EventPropertyInfoArray[i].NameOffset));
 
             GetMapInfo(
-                eRecord,
-                (PWCHAR)((PBYTE)(eInfo) + eInfo->EventPropertyInfoArray[i].nonStructType.MapNameOffset),
-                eInfo->DecodingSource,
-                mapInfo);
+                EventRecord,
+                (PWCHAR)((PBYTE)(EventInfo) +EventInfo->EventPropertyInfoArray[i].nonStructType.MapNameOffset),
+                EventInfo->DecodingSource,
+                EventMapInfo);
 
             result = TdhFormatProperty(
-                eInfo,
-                mapInfo,
+                EventInfo,
+                EventMapInfo,
                 sizeof(PVOID),
-                eInfo->EventPropertyInfoArray[i].nonStructType.InType,
-                eInfo->EventPropertyInfoArray[i].nonStructType.OutType,
-                eInfo->EventPropertyInfoArray[i].length,
+                EventInfo->EventPropertyInfoArray[i].nonStructType.InType,
+                EventInfo->EventPropertyInfoArray[i].nonStructType.OutType,
+                EventInfo->EventPropertyInfoArray[i].length,
                 (USHORT)(EndOfUserData - UserData),
                 UserData,
                 &FormattedDataSize,
                 FormattedData,
                 &UserDataConsumed);
 
-            FormattedData = (PWCHAR)malloc(FormattedDataSize);
+            FormattedData = malloc(FormattedDataSize);
 
             result = TdhFormatProperty(
-                eInfo,
-                mapInfo,
+                EventInfo,
+                EventMapInfo,
                 sizeof(PVOID),
-                eInfo->EventPropertyInfoArray[i].nonStructType.InType,
-                eInfo->EventPropertyInfoArray[i].nonStructType.OutType,
-                eInfo->EventPropertyInfoArray[i].length,
+                EventInfo->EventPropertyInfoArray[i].nonStructType.InType,
+                EventInfo->EventPropertyInfoArray[i].nonStructType.OutType,
+                EventInfo->EventPropertyInfoArray[i].length,
                 (USHORT)(EndOfUserData - UserData),
                 UserData,
                 &FormattedDataSize,
                 FormattedData,
                 &UserDataConsumed);
 
-            if (result == 0)
+            if (result == ERROR_SUCCESS)
             {
                 wprintf(L"%ls ", FormattedData);
                 UserData += UserDataConsumed;
@@ -125,23 +128,31 @@ void EventRecordCallback(PEVENT_RECORD eRecord)
         }
     }
 
-    //Cleanup
+    // Cleanup
     wprintf(L"\n");
-    free(eInfo);
-    free(mapInfo);
+    free(EventInfo);
+    free(EventMapInfo);
     free(FormattedData);
 }
 
-//Print Buffer Statistics after every Event Buffer flushes
-ULONG TotalLost = 0;
+// Print Buffer Statistics after every Event Buffer flushes
+unsigned long TotalLost = 0, BlockNumber = 0;
 
-ULONG BufferCallback(PEVENT_TRACE_LOGFILEW Buffer)
+unsigned long BufferCallback(
+    struct _EVENT_TRACE_LOGFILEW* LogFile)
 {
-    TotalLost += Buffer->EventsLost;
+    SYSTEMTIME st;
+    FileTimeToSystemTime((PFILETIME)&LogFile->CurrentTime, &st);
+
+    // Increment Counting variables
+    TotalLost += LogFile->EventsLost;
+    ++BlockNumber;
 
     wprintf(
-        L"Filled=%8d, Lost=%3d TotalLost= %d\r",
-        Buffer->Filled, Buffer->EventsLost, TotalLost);
+        L"\n%02d/%02d/%04d-%02d:%02d:%02d.%03d :: %8d: Filled=%8d, Lost=%3d TotalLost= %d\r",
+        st.wMonth, st.wDay, st.wYear,
+        st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
+        BlockNumber, LogFile->Filled, LogFile->EventsLost, TotalLost);
 
     return TRUE;
 }

@@ -1,84 +1,67 @@
-#include "PrintProperties.h"
+#include "WinInternal.h"
 #include <stdio.h>
 #include <sddl.h>
+#include "Functions.h"
 
 #define SEC_INFO   ( OWNER_SECURITY_INFORMATION \
-                   | GROUP_SECURITY_INFORMATION  \
-                   | DACL_SECURITY_INFORMATION    \
+                   | GROUP_SECURITY_INFORMATION \
+                   | DACL_SECURITY_INFORMATION \
                    | SACL_SECURITY_INFORMATION )
 
-#define STATUS_BUFFER_TOO_SMALL 0xC0000023L
+#define STATUS_BUFFER_TOO_SMALL (long)0xC0000023L
 
-typedef enum _EVENT_TRACE_INFORMATION_CLASS {
-    EventTraceSessionSecurityInformation = 4
-} EVENT_TRACE_INFORMATION_CLASS;
-
-typedef struct _EVENT_TRACE_SESSION_SECURITY_INFORMATION {
-    EVENT_TRACE_INFORMATION_CLASS EventTraceInformationClass;
-    ULONG SecurityInformation;
-    ULONG64 TraceHandle;
-    SECURITY_DESCRIPTOR SecurityDescriptor[ANYSIZE_ARRAY];
-} EVENT_TRACE_SESSION_SECURITY_INFORMATION, *PEVENT_TRACE_SESSION_SECURITY_INFORMATION;
-
-typedef enum _SYSTEM_INFORMATION_CLASS {
-    SystemPerformanceTraceInformation = 31
-} SYSTEM_INFORMATION_CLASS;
-
-NTSTATUS NtQuerySystemInformation(
-    SYSTEM_INFORMATION_CLASS SystemInformationClass,
-    PVOID SystemInformation,
-    ULONG SystemInformationLength,
-    PULONG ReturnLength
-);
-
-ULONG SecurityDescriptorString(ULONG64 TraceHandle)
+ULONG SecurityDescriptorString(
+    TRACEHANDLE TraceHandle)
 {
-    ULONG result = 0, ReturnLen = 0;
-    ULONG InfoLen = sizeof(EVENT_TRACE_SESSION_SECURITY_INFORMATION);
-    NTSTATUS status;
-    PWCHAR wstring = NULL;
+    BOOL bRes = 0;
+    NTSTATUS Status;
+    PWSTR StringSecurityDescriptor = NULL;
     PEVENT_TRACE_SESSION_SECURITY_INFORMATION SessionInfo = NULL;
+    ULONG ReturnLen, InfoLen = sizeof(*SessionInfo);
 
     while (TRUE)
     {
         if (SessionInfo)
             free(SessionInfo);
-        SessionInfo = (PEVENT_TRACE_SESSION_SECURITY_INFORMATION)malloc(InfoLen);
+        SessionInfo = malloc(InfoLen);
         if (!SessionInfo)
             break;
         SessionInfo->EventTraceInformationClass = EventTraceSessionSecurityInformation;
         SessionInfo->TraceHandle = TraceHandle; //Properties->Wnode.HistoricalContext;
-        SessionInfo->SecurityInformation = DACL_SECURITY_INFORMATION; //0x4
-        status = NtQuerySystemInformation(
+        SessionInfo->SecurityInformation = DACL_SECURITY_INFORMATION; //4u
+        Status = NtQuerySystemInformation(
             SystemPerformanceTraceInformation,
-            SessionInfo, InfoLen, &ReturnLen);
+            SessionInfo,
+            InfoLen,
+            &ReturnLen);
         InfoLen = ReturnLen;
 
-        if (status != STATUS_BUFFER_TOO_SMALL)
+        if (Status != STATUS_BUFFER_TOO_SMALL)
         {
-            if (status >= S_OK)
+            if (Status >= S_OK)
             {
-                result = ConvertSecurityDescriptorToStringSecurityDescriptorW(
+                bRes = ConvertSecurityDescriptorToStringSecurityDescriptorW(
                     SessionInfo->SecurityDescriptor,
                     SDDL_REVISION_1,
                     SEC_INFO,
-                    &wstring,
+                    &StringSecurityDescriptor,
                     NULL);
-                if (result == 1)
-                    wprintf(L"Session Security:       %ls\n", wstring);
+                if (bRes)
+                    wprintf(L"Session Security:       %ls\n", StringSecurityDescriptor);
             }
+
             free(SessionInfo);
-            return result;
+            return bRes;
         }
     }
-    return result;
+    return bRes;
 }
 
-void PrintTraceProperties(PEVENT_TRACE_PROPERTIES Properties)
+void PrintTraceProperties(
+    struct _EVENT_TRACE_PROPERTIES_V2* Properties)
 {
-    PWCHAR ClockType, MaximumFileSize, unit;
+    PWCHAR ClockType;
     WCHAR Guid[GUID_STRING];
-    ULONG FlushTimer;
 
     if(Properties->LoggerNameOffset)
         wprintf(L"Logger Name:            %ls\n", (PWCHAR)((PBYTE)Properties + Properties->LoggerNameOffset));
@@ -109,21 +92,32 @@ void PrintTraceProperties(PEVENT_TRACE_PROPERTIES Properties)
     wprintf(L"Real Time Buffers Lost: %ld\n", Properties->RealTimeBuffersLost);
     wprintf(L"Real Time Consumers:    %ld\n", Properties->Wnode.ProviderId);
 
-    if (Properties->Wnode.ClientContext == 1)
+    if (Properties->Wnode.ClientContext == EVENT_TRACE_CLOCK_PERFCOUNTER)
         ClockType = L"ClockType:              PerfCounter\n";
-    else if (Properties->Wnode.ClientContext == 2)
+    else if (Properties->Wnode.ClientContext == EVENT_TRACE_CLOCK_SYSTEMTIME)
         ClockType = L"ClockType:              SystemTime\n";
     else
     {
         ClockType = L"ClockType               CPU Cycle\n";
-        if (Properties->Wnode.ClientContext != 3)
+        if (Properties->Wnode.ClientContext != EVENT_TRACE_CLOCK_CPUCYCLE)
             ClockType = L"ClockType:              Unknown\n";
     }
     wprintf(ClockType);
 
+    if (Properties->LogFileMode & EVENT_TRACE_NO_PER_PROCESSOR_BUFFERING)
+        wprintf(L"No per-processor buffering\n");
+
+    if (Properties->LogFileMode & (EVENT_TRACE_STOP_ON_HYBRID_SHUTDOWN | EVENT_TRACE_PERSIST_ON_HYBRID_SHUTDOWN))
+    {
+        PWSTR Shutdown = L"Persist";
+        if (Properties->LogFileMode & EVENT_TRACE_STOP_ON_HYBRID_SHUTDOWN)
+            Shutdown = L"Stop";
+        wprintf(L"Hybrid Shutdown:        %ls\n", Shutdown);
+    }
+
     if (Properties->MaximumFileSize)
     {
-        MaximumFileSize = L"Maximum File Size:      %ld Kb\n";
+        PWSTR MaximumFileSize = L"Maximum File Size:      %ld Kb\n";
         if (!(Properties->LogFileMode & EVENT_TRACE_USE_KBYTES_FOR_SIZE))
             MaximumFileSize = L"Maximum File Size:      %ld Mb\n";
         wprintf(MaximumFileSize, Properties->MaximumFileSize);
@@ -131,20 +125,17 @@ void PrintTraceProperties(PEVENT_TRACE_PROPERTIES Properties)
     else
         wprintf(L"Maximum File Size:      not set\n");
 
-    FlushTimer = Properties->FlushTimer;
-    if (FlushTimer)
+    if (Properties->FlushTimer)
     {
-        unit = L"secs";
+        PWSTR unit = L"secs";
         if ((Properties->LogFileMode >> 4) & 1)
             unit = L"ms";
-        wprintf(L"Buffer Flush Timer:     %ld %ls\n", FlushTimer, unit);
+        wprintf(L"Buffer Flush Timer:     %ld %ls\n", Properties->FlushTimer, unit);
     }
     else
         wprintf(L"Buffer Flush Timer:     not set\n");
 
     if (Properties->LogFileNameOffset > 0)
-    {
-        wprintf(L"Log Filename:           %ls\n",
-            (PWCHAR)((PBYTE)Properties + Properties->LogFileNameOffset));
-    }
+        wprintf(L"Log Filename:           %ls\n", (PWCHAR)((PBYTE)Properties + Properties->LogFileNameOffset));
+    wprintf(L"\n");
 }
