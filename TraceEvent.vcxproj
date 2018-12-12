@@ -9,15 +9,19 @@
   <ItemGroup>
     <ClCompile Include="src\CallBacks.c" />
     <ClCompile Include="src\Functions.c" />
+    <ClCompile Include="src\Helpers.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\PrintProperties.c" />
+    <ClCompile Include="src\SecHost.c" />
     <ClCompile Include="src\TraceEvent.c" />
     <ClCompile Include="src\wgetopt.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CallBacks.h" />
     <ClInclude Include="src\Functions.h" />
+    <ClInclude Include="src\Helpers.h" />
     <ClInclude Include="src\PrintProperties.h" />
+    <ClInclude Include="src\SecHost.h" />
     <ClInclude Include="src\TraceEvent.h" />
     <ClInclude Include="src\wgetopt.h" />
     <ClInclude Include="src\WinInternal.h" />

@@ -3,6 +3,7 @@
 #include "CallBacks.h"
 #include "PrintProperties.h"
 #include "Functions.h"
+#include "SecHost.h"
 #include <stdio.h>
 
 #define EtwpMaxLoggers 64
@@ -23,10 +24,10 @@ unsigned long StartSession(
     Properties->LoggerNameOffset = sizeof(EVENT_TRACE_PROPERTIES_V2);
 
     TRACEHANDLE TraceHandle = 0;
-    ULONG result = StartTraceW(
+    ULONG result = X_StartTraceW(
         &TraceHandle,
         LoggerName,
-        (PEVENT_TRACE_PROPERTIES)Properties);
+        Properties);
 
     if (result == ERROR_SUCCESS)
     {

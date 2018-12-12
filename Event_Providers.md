@@ -98,4 +98,42 @@
 | HypervisorXTraceGuid    | {2CE9A149-EFFE-42F0-A635-A1D39E26C8F2} |
 | IptGuid                 | {FF1FD2FD-6008-42BB-9E75-00A20051F3BE} |
 
+
+* List of Event Providers from `nt!EtwpUmglProviders` (array of GUIDs):
+
+|      Provider Name      |             Provider GUID              |
+|:-----------------------:|:--------------------------------------:|
+| HeapRangeGuid           | {D781CA11-61C0-4387-B83D-AF52D3D2DD6A} |
+| LoadMUIDllGuid          | {D3DE60B2-A663-45D5-9826-A0A5949D2CB0} |
+| ThreadPoolGuid          | {C861D0E2-A2C1-4D36-9F9C-970BAB943A12} |
+| UmsTraceGuid            | {BDDAD2C1-52D1-4AEA-94D6-B3CA9236F62E} |
+| HeapSummaryGuid         | {05867806-C246-43EF-A147-E17D2BDB1496} |
+| ImageLoadGuid           | {2CB15D1D-5FC1-11D2-ABE1-00A0C911F518} |
+| HeapGuid                | {222962AB-6180-4B88-A825-346B75F2A24A} |
+| CritSecGuid             | {3AC66736-CC59-4CFF-8115-8DF50E39816B} |
+| WnfGuid                 | {42695762-EA50-497A-9068-5CBBB35E0B95} |
+| UmglThreadGuid          | {3BEEF58A-6E0F-445D-B2A4-37AB737BD47E} |
+
+
+* List of Event Providers from `nt!EtwpInitialize`:
+
+|      Provider Name                      |             Provider GUID              |
+|:---------------------------------------:|:--------------------------------------:|
+| SecurityMitigationsProviderGuid         | {FAE10392-F0AF-4AC0-B8FF-9F4D920C3CDF} |
+| MS_Windows_Security_Adminless_Provider  | {EA216962-877B-5B73-F7C5-8AEF5375959E} |
+| MS_Windows_Security_LPAC_Provider       | {45EEC9E5-4A1B-5446-7AD8-A4AB1313C437} |
+| ThreatIntProviderGuid                   | {F4E1897C-BB5D-5668-F1D8-040F4D8DD344} |
+| CVEAuditProviderGuid                    | {85A62A0D-7E17-485F-9D4F-749A287193A6} |
+| KernelAuditApiCallsGuid                 | {E02A841C-75A3-4FA7-AFC8-AE09CF9B7F23} |
+| MS_Windows_Kernel_AppCompat_Provider    | {16A1ADC1-9B7F-4CD9-94B3-D8296AB1B130} |
+| MemoryProvGuid                          | {D1D93EF7-E1F2-4F45-9943-03D245FE6C00} |
+| FileProvGuid                            | {EDD08927-9CC4-4E65-B970-C2560FB5C289} |
+| DiskProvGuid                            | {C7BDE69A-E1E0-4177-B6EF-283AD1525271} |
+| NetProvGuid                             | {7DD42A49-5329-4832-8DFD-43D979153A88} |
+| PsProvTraceLoggingGuid                  | {2839FF94-8F12-4E1B-82E3-AF7AF77A450F} |
+| PsProvGuid                              | {22FB2CD6-0E7B-422B-A0C7-2FAD1FD0E716} |
+| KernelProvGuid                          | {A68CA8B7-004F-D7B6-A698-07E2DE0F1F5D} |
+| EventTracingProvGuid                    | {B675EC37-BDB6-4648-BC92-F3FDC74D3CA2} |
+
+
 <!-- End -->
