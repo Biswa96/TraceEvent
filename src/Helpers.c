@@ -1,10 +1,11 @@
 #include "WinInternal.h"
 
-ULONG EtwpValidateTraceProperties(
-    PEVENT_TRACE_PROPERTIES_V2 Properties,
-    PULONG pFilterDescCount,
-    PEVENT_FILTER_DESCRIPTOR* pFilterDesc,
-    PULONG ReturnedLength)
+ULONG
+WINAPI
+EtwpValidateTraceProperties(PEVENT_TRACE_PROPERTIES_V2 Properties,
+                            PULONG pFilterDescCount,
+                            PEVENT_FILTER_DESCRIPTOR* pFilterDesc,
+                            PULONG ReturnedLength)
 {
     if (Properties->Wnode.BufferSize < sizeof(EVENT_TRACE_PROPERTIES))
         return ERROR_BAD_LENGTH;
@@ -27,6 +28,7 @@ ULONG EtwpValidateTraceProperties(
         *ReturnedLength = sizeof(EVENT_TRACE_PROPERTIES);
         return ERROR_SUCCESS;
     }
+
     *ReturnedLength = sizeof(EVENT_TRACE_PROPERTIES_V2);
     if (Properties->Wnode.BufferSize < sizeof(EVENT_TRACE_PROPERTIES_V2))
         return ERROR_BAD_LENGTH;
@@ -39,24 +41,27 @@ ULONG EtwpValidateTraceProperties(
     if (!FilterDescCount ||
         !(Properties->LogFileMode & EVENT_TRACE_PRIVATE_LOGGER_MODE))
         return ERROR_SUCCESS;
-    /* EtwpValidateFilterDescriptors(TRUE, 0, FilterDescCount, FilterDesc) */
+    // EtwpValidateFilterDescriptors(TRUE, 0, FilterDescCount, FilterDesc)
 
     *pFilterDescCount = FilterDescCount;
     *pFilterDesc = FilterDesc;
     return ERROR_SUCCESS;
 }
 
-void EtwpCopyPropertiesToInfo(
-    PEVENT_TRACE_PROPERTIES_V2 Properties,
-    PWMI_LOGGER_INFORMATION WmiLogInfo)
+void
+WINAPI
+EtwpCopyPropertiesToInfo(PEVENT_TRACE_PROPERTIES_V2 Properties,
+                         PWMI_LOGGER_INFORMATION WmiLogInfo)
 {
     WmiLogInfo->Wnode.BufferSize = Properties->Wnode.BufferSize;
     WmiLogInfo->Wnode.HistoricalContext = Properties->Wnode.HistoricalContext;
     WmiLogInfo->Wnode.CountLost = Properties->Wnode.CountLost;
+
     if (Properties->Wnode.ClientContext)
         WmiLogInfo->Wnode.ClientContext = Properties->Wnode.ClientContext;
     else
         WmiLogInfo->Wnode.ClientContext = EVENT_TRACE_CLOCK_PERFCOUNTER;
+
     WmiLogInfo->Wnode.Flags = Properties->Wnode.Flags;
     WmiLogInfo->BufferSize = Properties->BufferSize;
     WmiLogInfo->MinimumBuffers = Properties->MinimumBuffers;
@@ -75,21 +80,26 @@ void EtwpCopyPropertiesToInfo(
     WmiLogInfo->LoggerThreadId = Properties->LoggerThreadId;
 
     if (WmiLogInfo->Wnode.Flags & WNODE_FLAG_VERSIONED_PROPERTIES)
-        WmiLogInfo->Wow = 0;
+        WmiLogInfo->V2Options = 0;
     else
-    WmiLogInfo->Wow = (ULONG)Properties->V2Options;
+    WmiLogInfo->V2Options = Properties->V2Options;
 }
 
-void EtwpCopyInfoToProperties(
-    PWMI_LOGGER_INFORMATION WmiLogInfo,
-    PEVENT_TRACE_PROPERTIES_V2 Properties)
+#define DISABLE_VERSIONED_PROPERTIES \
+    (~(WNODE_FLAG_ALL_DATA | WNODE_FLAG_VERSIONED_PROPERTIES))
+
+void
+WINAPI
+EtwpCopyInfoToProperties(PWMI_LOGGER_INFORMATION WmiLogInfo,
+                         PEVENT_TRACE_PROPERTIES_V2 Properties)
 {
     Properties->Wnode.BufferSize = WmiLogInfo->Wnode.BufferSize;
+    Properties->Wnode.ProviderId = WmiLogInfo->RealTimeConsumerCount;
     Properties->Wnode.HistoricalContext = WmiLogInfo->Wnode.HistoricalContext;
     Properties->Wnode.CountLost = WmiLogInfo->Wnode.CountLost;
     Properties->Wnode.Guid = WmiLogInfo->Wnode.Guid;
     Properties->Wnode.ClientContext = WmiLogInfo->Wnode.ClientContext;
-    WmiLogInfo->Wnode.Flags = Properties->Wnode.Flags;
+    Properties->Wnode.Flags = WmiLogInfo->Wnode.Flags;
     Properties->BufferSize = WmiLogInfo->BufferSize;
     Properties->MinimumBuffers = WmiLogInfo->MinimumBuffers;
     Properties->MaximumBuffers = WmiLogInfo->MaximumBuffers;
@@ -109,10 +119,8 @@ void EtwpCopyInfoToProperties(
     if (Properties->Wnode.Flags & WNODE_FLAG_VERSIONED_PROPERTIES)
     {
         Properties->Wnode.Flags |= WNODE_FLAG_VERSIONED_PROPERTIES;
-        Properties->V2Options = WmiLogInfo->Wow;
+        Properties->V2Options = WmiLogInfo->V2Options;
     }
     else
-    {
-        Properties->Wnode.Flags &= (~(WNODE_FLAG_ALL_DATA | WNODE_FLAG_VERSIONED_PROPERTIES));
-    }
+        Properties->Wnode.Flags &= DISABLE_VERSIONED_PROPERTIES;
 }

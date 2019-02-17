@@ -8,7 +8,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CallBacks.c" />
-    <ClCompile Include="src\Functions.c" />
+    <ClCompile Include="src\Log.c" />
     <ClCompile Include="src\Helpers.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\PrintProperties.c" />
@@ -18,7 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CallBacks.h" />
-    <ClInclude Include="src\Functions.h" />
+    <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Helpers.h" />
     <ClInclude Include="src\PrintProperties.h" />
     <ClInclude Include="src\SecHost.h" />
@@ -36,7 +36,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -56,11 +56,10 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <DisableSpecificWarnings>4201</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4201;4214</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Advapi32.lib;ntdll.lib;tdh.lib;shell32.lib;kernel32.lib</AdditionalDependencies>
+      <AdditionalDependencies>Advapi32.lib;ntdll.lib;tdh.lib;shell32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

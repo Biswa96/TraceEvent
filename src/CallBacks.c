@@ -1,12 +1,13 @@
-#include <windows.h>
+#include "WinInternal.h"
 #include <tdh.h>
 #include <stdio.h>
 
 #define LODWORD(x) ((DWORD)(x))
 #define HIDWORD(x) ((DWORD)(((x) >> 32) & 0xffffffff))
 
-void RemoveTrailingSpace(
-    PEVENT_MAP_INFO EventMapInfo)
+void
+WINAPI
+RemoveTrailingSpace(PEVENT_MAP_INFO EventMapInfo)
 {
     size_t ByteLength = 0;
 
@@ -17,15 +18,18 @@ void RemoveTrailingSpace(
     }
 }
 
-void GetMapInfo(
-    PEVENT_RECORD EventRecord,
-    PWCHAR MapName,
-    ULONG DecodingSource,
-    PEVENT_MAP_INFO EventMapInfo)
+void
+WINAPI
+GetMapInfo(PEVENT_RECORD EventRecord,
+           PWCHAR MapName,
+           ULONG DecodingSource,
+           PEVENT_MAP_INFO EventMapInfo)
 {
     ULONG MapSize = 0;
+    HANDLE HeapHandle = GetProcessHeap();
+
     ULONG result = TdhGetEventMapInformation(EventRecord, MapName, EventMapInfo, &MapSize);
-    EventMapInfo = malloc(MapSize);
+    EventMapInfo = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, MapSize);
     result = TdhGetEventMapInformation(EventRecord, MapName, EventMapInfo, &MapSize);
 
     if (result == ERROR_SUCCESS)
@@ -36,8 +40,9 @@ void GetMapInfo(
 }
 
 // Event Providers use EventWriteTransfer function
-void EventRecordCallback(
-    struct _EVENT_RECORD* EventRecord)
+void
+WINAPI
+EventRecordCallback(PEVENT_RECORD EventRecord)
 {
     PEVENT_MAP_INFO EventMapInfo = NULL;
     PBYTE EndOfUserData = (PBYTE)EventRecord->UserData + EventRecord->UserDataLength;
@@ -55,16 +60,18 @@ void EventRecordCallback(
     FileTimeToSystemTime(&ft, &st);
 
     wprintf(L"%02d/%02d/%04d-%02d:%02d:%02d.%03d :: "
-        L"ThreadID: %ld ProcessID: %ld\n",
-        st.wMonth, st.wDay, st.wYear,
-        st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-        EventRecord->EventHeader.ThreadId,
-        EventRecord->EventHeader.ProcessId);
+            L"ThreadID: %ld ProcessID: %ld\n",
+            st.wMonth, st.wDay, st.wYear,
+            st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
+            EventRecord->EventHeader.ThreadId,
+            EventRecord->EventHeader.ProcessId);
 
     // Get Event Information
     ULONG size = 0;
+    HANDLE HeapHandle = GetProcessHeap();
+
     ULONG result = TdhGetEventInformation(EventRecord, 0, NULL, NULL, &size);
-    PTRACE_EVENT_INFO EventInfo = malloc(size);
+    PTRACE_EVENT_INFO EventInfo = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, size);
     result = TdhGetEventInformation(EventRecord, 0, NULL, EventInfo, &size);
     if (result != ERROR_SUCCESS)
     {
@@ -105,7 +112,7 @@ void EventRecordCallback(
                 FormattedData,
                 &UserDataConsumed);
 
-            FormattedData = malloc(FormattedDataSize);
+            FormattedData = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, FormattedDataSize);
 
             result = TdhFormatProperty(
                 EventInfo,
@@ -130,16 +137,17 @@ void EventRecordCallback(
 
     // Cleanup
     wprintf(L"\n");
-    free(EventInfo);
-    free(EventMapInfo);
-    free(FormattedData);
+    RtlFreeHeap(HeapHandle, 0, EventInfo);
+    RtlFreeHeap(HeapHandle, 0, EventMapInfo);
+    RtlFreeHeap(HeapHandle, 0, FormattedData);
 }
 
 // Print Buffer Statistics after every Event Buffer flushes
-unsigned long TotalLost = 0, BlockNumber = 0;
+ULONG TotalLost = 0, BlockNumber = 0;
 
-unsigned long BufferCallback(
-    struct _EVENT_TRACE_LOGFILEW* LogFile)
+ULONG
+WINAPI
+BufferCallback(PEVENT_TRACE_LOGFILEW LogFile)
 {
     SYSTEMTIME st;
     FileTimeToSystemTime((PFILETIME)&LogFile->CurrentTime, &st);
@@ -148,11 +156,10 @@ unsigned long BufferCallback(
     TotalLost += LogFile->EventsLost;
     ++BlockNumber;
 
-    wprintf(
-        L"\n%02d/%02d/%04d-%02d:%02d:%02d.%03d :: %8d: Filled=%8d, Lost=%3d TotalLost= %d\r",
-        st.wMonth, st.wDay, st.wYear,
-        st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-        BlockNumber, LogFile->Filled, LogFile->EventsLost, TotalLost);
+    wprintf(L"\n%02d/%02d/%04d-%02d:%02d:%02d.%03d :: %8d: Filled=%8d, Lost=%3d TotalLost= %d\r",
+            st.wMonth, st.wDay, st.wYear,
+            st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
+            BlockNumber, LogFile->Filled, LogFile->EventsLost, TotalLost);
 
     return TRUE;
 }

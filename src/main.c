@@ -1,19 +1,20 @@
 #include <Windows.h>
-#include "Functions.h"
+#include "Log.h"
 #include "TraceEvent.h"
 #include <stdio.h>
 #include "wgetopt.h"
 
-int main(void)
+int
+WINAPI
+main(void)
 {
     int wargc;
     PWSTR* wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
 
     if (wargc < 2)
     {
-        wprintf(
-            L"Provide a valid option and agrument.\n"
-            L"Try 'TraceEvent.exe --help' for more information.\n");
+        wprintf(L"Provide a valid option and agrument.\n"
+                L"Try 'TraceEvent.exe --help' for more information.\n");
         return 0;
     }
 
@@ -21,9 +22,11 @@ int main(void)
     GUID ProviderID = { 0 };
     BOOLEAN Start = FALSE;
     PWSTR LoggerName = NULL;
+    PCWSTR OptionString = L"eg:hLl:q:S:s:";
 
-    /* Option Table */
+    // Option Table
     const struct option OptionTable[] = {
+        { L"enumguid",      no_argument,         0,  'e' },
         { L"guid",          required_argument,   0,  'g' },
         { L"help",          no_argument,         0,  'h' },
         { L"list",          no_argument,         0,  'L' },
@@ -34,14 +37,18 @@ int main(void)
         { 0,                no_argument,         0,   0  },
     };
 
-    /* Option parsing */
-    while ((c = wgetopt_long(wargc, wargv, L"g:hLl:q:S:s:", OptionTable, 0)) != -1)
+    // Option parsing
+    while ((c = wgetopt_long(wargc, wargv, OptionString, OptionTable, 0)) != -1)
     {
         switch (c)
         {
         case 0:
             wprintf(L"Try 'TraceEvent.exe --help' for more information.\n");
             Usage();
+            break;
+
+        case 'e':
+            EnumGuids();
             break;
 
         case 'g':

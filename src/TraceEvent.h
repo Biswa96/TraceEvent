@@ -1,22 +1,28 @@
 #ifndef TRACEVENT_H
 #define TRACEVENT_H
 
-#include <wchar.h>
+ULONG
+WINAPI
+StartSession(PWSTR LoggerName, GUID* ProviderID);
 
-unsigned long StartSession(
-    wchar_t* LoggerName,
-    struct _GUID* ProviderID);
+ULONG
+WINAPI
+ConsumeEvent(PWSTR LoggerName);
 
-unsigned long ConsumeEvent(
-    wchar_t* LoggerName);
+ULONG
+WINAPI
+StopSession(PWSTR LoggerName);
 
-unsigned long StopSession(
-    wchar_t* LoggerName);
+ULONG
+WINAPI
+QuerySession(PWSTR LoggerName);
 
-unsigned long QuerySession(
-    wchar_t* LoggerName);
+ULONG
+WINAPI
+ListSessions(void);
 
-void ListSessions(
-    void);
+void
+WINAPI
+EnumGuids(void);
 
 #endif //TRACEVENT_H

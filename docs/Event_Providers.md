@@ -26,6 +26,7 @@
 | Microsoft.Windows.HangReporting                    | {3E0D88DE-AE5C-438A-BB1C-C2E627F8AECB} | WerSvc.dll          |
 | Microsoft.Windows.Licensing.IUI                    | {753436F5-735D-41FA-B4B7-D68579AC5582} | Explorer.exe        |
 | Microsoft.Windows.Lxss.Manager                     | {B99CDB5A-039C-5046-E672-1A0DE0A40211} | LxssManager.dll     |
+| Microsoft.Windows.Lxss.Heartbeat                   | {0451AB4F-F74D-4008-B491-EB2E5F5D8B89} | LxssManager.dll     |
 | Microsoft.Windows.MobilityExperience               | {5AFB7971-45E5-4D49-AAEB-1B04D39872CF} | Explorer.exe        |
 | Microsoft.Windows.NTVDM                            | {70CAA5B8-A8F0-408A-8B53-563BFF7FF2FF} | Kernel32.dll        |
 | Microsoft.Windows.PerfLib                          | {BC44FFCD-964B-5B85-8662-0BA87EDAF07A} | AdvApi32.dll        |
@@ -46,10 +47,12 @@
 | Microsoft-Windows-Shell-Launcher                   | {3D6120A6-0986-51C4-213A-E2975903051D} | Explorer.exe        |
 | Microsoft.Windows.Security.IsolationApi            | {B6FD710B-F783-4B1C-AB9C-C68099DCC0C7} | SecHost.dll         |
 | Microsoft.Windows.Security.MitigationPolicy        | {CA967C75-04BF-40B5-9A16-98B5F9332A92} | SecHost.dll         |
+| Microsoft.Windows.Socket.Afunix                    | {F3909F63-E473-4DB7-B0F3-458B80B23843} | AfUnix.Sys          |
 | Microsoft.Windows.Subsystem.Adss                   | {754E4536-6735-4194-BE81-1374BD2E9B0D} | LxCore.sys          |
 | Microsoft.Windows.Subsystem.LxCore                 | {0CD1C309-0878-4515-83DB-749843B3F5C9} | LxCore.sys          |
 | Microsoft.Windows.Subsystem.Lxss                   | {D90B9468-67F0-5B3B-42CC-82AC81FFD960} | WslHost.exe         |
 | Microsoft.Windows.Taskmgr                          | {2E635D8E-1107-4555-9319-32EEB895AAAE} | TaskMgr.exe         |
+| Microsoft.Windows.TlgAggregateInternal             | {703FCC13-B66F-5868-DDD9-E2DB7F381FFB} | AfUnix.Sys          |
 | Microsoft-Windows-UAC                              | {E7558269-3FA5-46ED-9F4D-3C6E282DDE55} | Kernel32.dll        |
 | Microsoft.Windows.Wil.FeatureLogging               | {DCEF5411-1F98-5EE7-238B-5ABD0E078E97} | Explorer.exe        |
 | Microsoft.Windows.WindowsErrorReporting            | {CC79CF77-70D9-4082-9B52-23F3A3E92FE4} | WerFault.exe        |

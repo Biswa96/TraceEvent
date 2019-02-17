@@ -1,9 +1,10 @@
 #include <Windows.h>
 #include <stdio.h>
 
-#define GUID_STRING 128u
+#define GUID_STRING 40
 
-/* Form ReactOS /dll/win32/ole32/compobj.c */
+// From ReactOS dll/win32/ole32/compobj.c
+
 static inline int is_valid_hex(wchar_t c)
 {
     if (!(((c >= '0') && (c <= '9')) ||
@@ -25,9 +26,9 @@ static const unsigned char guid_conv_table[256] =
 };
 
 /* conversion helper for CLSIDFromString/IIDFromString */
-int guid_from_string(
-    wchar_t* s,
-    struct _GUID* id)
+int
+WINAPI
+guid_from_string(PWSTR s, GUID* id)
 {
     int i;
 
@@ -75,37 +76,37 @@ int guid_from_string(
     return FALSE;
 }
 
-void PrintGuid(
-    struct _GUID* id,
-    wchar_t* string)
+void
+WINAPI
+GuidToString(GUID* id, PWSTR string)
 {
-    swprintf_s(
-        string,
-        GUID_STRING,
-        L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-        id->Data1, id->Data2, id->Data3,
-        id->Data4[0], id->Data4[1], id->Data4[2],
-        id->Data4[3], id->Data4[4], id->Data4[5],
-        id->Data4[6], id->Data4[7]);
+    _snwprintf_s(string,
+                 GUID_STRING,
+                 GUID_STRING,
+                 L"{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                 id->Data1, id->Data2, id->Data3,
+                 id->Data4[0], id->Data4[1], id->Data4[2],
+                 id->Data4[3], id->Data4[4], id->Data4[5],
+                 id->Data4[6], id->Data4[7]);
 }
 
-void Log(
-    unsigned long Result,
-    wchar_t* Function)
+void
+WINAPI
+Log(ULONG Result, PWSTR Function)
 {
-    wchar_t* MsgBuffer = NULL;
-    unsigned long tChars = FormatMessageW(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        Result,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (wchar_t*)&MsgBuffer,
-        0,
-        NULL);
+    PWSTR MsgBuffer = NULL;
+    ULONG Chars = 0;
+    ULONG Flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
-    if (tChars)
+    Chars = FormatMessageW(Flags,
+                           NULL,
+                           Result,
+                           MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                           (PWSTR)&MsgBuffer,
+                           0,
+                           NULL);
+
+    if (Chars)
         wprintf(L"%ls%ld\t %ls", Function, (Result & 0xFFFF), MsgBuffer);
     else
         wprintf(L"%ls%ld\n", Function, (Result & 0xFFFF));
@@ -113,22 +114,22 @@ void Log(
     LocalFree(MsgBuffer);
 }
 
-void Usage(
-    void)
+void
+WINAPI
+Usage(void)
 {
-    wprintf(
-        L"\nTraceEvent -- (c) Copyright 2018 Biswapriyo Nath\n"
-        L"Licensed under GNU Public License version 3 or higher\n\n"
-        L"Trace and log events in real time sessions\n"
-        L"Usage: TraceEvent.exe [--] [option] [argument]\n\n"
-        L"Options:\n"
-        L"  -g,  --guid    <ProviderGUID>        Add Event Provider GUID with trace session.\n"
-        L"  -L,  --list                          List all trace sessions.\n"
-        L"  -l,  --log     <LoggerName>          Log events in real time.\n"
-        L"  -q,  --query   <LoggerName>          Query status of <LoggerName> trace session.\n"
-        L"  -S,  --start   <LoggerName>          Starts the <LoggerName> trace session.\n"
-        L"  -s,  --stop    <LoggerName>          Stops the <LoggerName> trace session.\n"
-        L"  -h,  --help                          Display usage information.\n"
-        L"\n"
-    );
+    wprintf(L"\nTraceEvent -- (c) Copyright 2018-19 Biswapriyo Nath\n"
+            L"Licensed under GNU Public License version 3 or higher\n\n"
+            L"Trace and log events in real time sessions\n"
+            L"Usage: TraceEvent.exe [--] [option] [argument]\n\n"
+            L"Options:\n"
+            L"  -e,  --enumguid                          Enumerate registered trace guids.\n"
+            L"  -g,  --guid        <ProviderGUID>        Add Event Provider GUID with trace session.\n"
+            L"  -L,  --list                              List all trace sessions.\n"
+            L"  -l,  --log         <LoggerName>          Log events in real time.\n"
+            L"  -q,  --query       <LoggerName>          Query status of <LoggerName> trace session.\n"
+            L"  -S,  --start       <LoggerName>          Starts the <LoggerName> trace session.\n"
+            L"  -s,  --stop        <LoggerName>          Stops the <LoggerName> trace session.\n"
+            L"  -h,  --help                              Display usage information.\n"
+            L"\n");
 }

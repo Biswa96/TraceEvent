@@ -1,16 +1,27 @@
 #ifndef SECHOST_H
 #define SECHOST_H
 
-#include <wchar.h>
+ULONG
+WINAPI
+EtwpCacheMaxLogger(PULONG EtwpMaxLoggers);
 
-typedef unsigned long ULONG, *PULONG;
-typedef wchar_t* PWSTR;
-typedef unsigned long long ULONG64, TRACEHANDLE, *PTRACEHANDLE;
-typedef struct _EVENT_TRACE_PROPERTIES_V2 *PEVENT_TRACE_PROPERTIES_V2;
+ULONG
+WINAPI
+XYZstartTraceW(PTRACEHANDLE TraceHandle,
+               PWSTR InstanceName,
+               PEVENT_TRACE_PROPERTIES_V2 Properties);
 
-ULONG X_StartTraceW(
-    PTRACEHANDLE TraceHandle,
-    PWSTR InstanceName,
-    PEVENT_TRACE_PROPERTIES_V2 Properties);
+ULONG
+WINAPI
+XYZcontrolTraceW(TRACEHANDLE TraceHandle,
+                 PWSTR InstanceName,
+                 PEVENT_TRACE_PROPERTIES_V2 Properties,
+                 ULONG ControlCode);
+
+ULONG
+WINAPI
+XYZenumerateTraceGuids(PTRACE_GUID_PROPERTIES* GuidPropertiesArray,
+                       ULONG PropertyArrayCount,
+                       PULONG GuidCount);
 
 #endif // SECHOST_H
