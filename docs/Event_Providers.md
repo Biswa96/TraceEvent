@@ -28,6 +28,7 @@
 | Microsoft.Windows.Lxss.Manager                     | {B99CDB5A-039C-5046-E672-1A0DE0A40211} | LxssManager.dll     |
 | Microsoft.Windows.Lxss.Heartbeat                   | {0451AB4F-F74D-4008-B491-EB2E5F5D8B89} | LxssManager.dll     |
 | Microsoft.Windows.MobilityExperience               | {5AFB7971-45E5-4D49-AAEB-1B04D39872CF} | Explorer.exe        |
+| Microsoft-Windows-Network-Setup                    | {A111F1C2-5923-47C0-9A68-D0BAFB577901} | 
 | Microsoft.Windows.NTVDM                            | {70CAA5B8-A8F0-408A-8B53-563BFF7FF2FF} | Kernel32.dll        |
 | Microsoft.Windows.PerfLib                          | {BC44FFCD-964B-5B85-8662-0BA87EDAF07A} | AdvApi32.dll        |
 | Microsoft.Windows.Shell.CoCreateInstanceAsSystem   | {FFE467F7-4F51-4061-82BE-C2ED8946A961} | Explorer.exe        |
@@ -42,6 +43,7 @@
 | Microsoft.Windows.Shell.TileBadgeProvider          | {34D3FCA3-41F2-4498-B7A0-58708572B583} | Explorer.exe        |
 | Microsoft.Windows.ShellExperienceDispatcher        | {273C19B2-6643-5A58-6288-C336D3688B8D} | Explorer.exe        |
 | Microsoft.Windows.ShellPlacements                  | {7CA6A4DD-DAE5-5FB7-EC8E-4A6C648FADF9} | Explorer.exe        |
+| Microsoft-Windows-Shell-Core                       | {30336ED4-E327-447C-9DE0-51B652C86108} | 
 | Microsoft_Windows_Shell_Core_Provider              | {30336ED4-E327-447C-9DE0-51B652C86108} | Explorer.exe        |
 | Microsoft-Windows-Shell-CortanaProactive           | {0E6F34B3-0637-55AB-F0BB-8B8FA83EDA04} | Explorer.exe        |
 | Microsoft-Windows-Shell-Launcher                   | {3D6120A6-0986-51C4-213A-E2975903051D} | Explorer.exe        |
@@ -54,11 +56,12 @@
 | Microsoft.Windows.Taskmgr                          | {2E635D8E-1107-4555-9319-32EEB895AAAE} | TaskMgr.exe         |
 | Microsoft.Windows.TlgAggregateInternal             | {703FCC13-B66F-5868-DDD9-E2DB7F381FFB} | AfUnix.Sys          |
 | Microsoft-Windows-UAC                              | {E7558269-3FA5-46ED-9F4D-3C6E282DDE55} | Kernel32.dll        |
+| Microsoft-Windows-User-Diagnostic                  | {305FC87B-002A-5E26-D297-60223012CA9C} | 
 | Microsoft.Windows.Wil.FeatureLogging               | {DCEF5411-1F98-5EE7-238B-5ABD0E078E97} | Explorer.exe        |
 | Microsoft.Windows.WindowsErrorReporting            | {CC79CF77-70D9-4082-9B52-23F3A3E92FE4} | WerFault.exe        |
 | Microsoft.Windows.WERSecureVertical                | {97945555-B04C-47C0-B399-E453D509A5F0} | WerFaultSecure.exe  |
 | Microsoft.Windows.WERVertical                      | {2B87E57E-7BD0-43A3-A278-02E62D59B2B1} | WerFault.exe        |
-| MSNT_SystemTrace                                   | {9E814AAD-3204-11D2-9A82-006008A86939} |                     |
+| MSNT_SystemTrace                                   | {9E814AAD-3204-11D2-9A82-006008A86939} | 
 | TelemetryAssert                                    | {6D1B249D-131B-468A-899B-FB0AD9551772} | Explorer.exe        |
 | TelemetryAssertDiagTrack                           | {E0B47CF8-E776-4EA7-9EC0-93A85B9A7A2B} | Explorer.exe        |
 | WERSVC_TRIGGER_PROVIDER_GUID                       | {E46EEAD8-0C54-4489-9898-8FA79D059E0E} | Dwm.exe             |

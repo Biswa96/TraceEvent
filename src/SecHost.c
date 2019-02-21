@@ -14,7 +14,7 @@ static const GUID SystemTraceControl = {
     0x11D2,
     { 0x9A, 0x82, 0x00, 0x60, 0x08, 0xA8, 0x69, 0x39 } };
 
-ULONG 
+ULONG
 WINAPI
 EtwpCacheMaxLogger(PULONG EtwpMaxLoggers)
 {
@@ -161,7 +161,9 @@ XYZstartTraceW(PTRACEHANDLE TraceHandle,
             StringCbCopyW((PWSTR)((PBYTE)Properties + LogFileNameOffset), Diff, LogFileName);
     }
 
-    RtlFreeHeap(HeapHandle, 0, WmiLogInfo);
+    // Cleanup
+    if(WmiLogInfo)
+        RtlFreeHeap(HeapHandle, 0, WmiLogInfo);
     return LastError;
 }
 
@@ -258,7 +260,7 @@ XYZcontrolTraceW(TRACEHANDLE TraceHandle,
     }
 
     // Convert ControlCode to Function code for NtTraceControl
-    ULONG FunctionCode = 0;
+    ULONG FunctionCode;
     switch (ControlCode)
     {
     case EVENT_TRACE_CONTROL_QUERY:
@@ -280,6 +282,9 @@ XYZcontrolTraceW(TRACEHANDLE TraceHandle,
     case EVENT_TRACE_CONTROL_INCREMENT_FILE:
         FunctionCode = TraceControlIncrementLoggerFile;
         break;
+
+    default:
+        FunctionCode = INFINITE;
     }
 
     NTSTATUS Status;
@@ -316,7 +321,9 @@ XYZcontrolTraceW(TRACEHANDLE TraceHandle,
             StringCbCopyW((PWSTR)((PBYTE)Properties + LogFileNameOffset), Diff, LogFileName);
     }
 
-    RtlFreeHeap(HeapHandle, 0, WmiLogInfo);
+    // Cleanup
+    if (WmiLogInfo)
+        RtlFreeHeap(HeapHandle, 0, WmiLogInfo);
     return LastError;
 }
 
@@ -384,7 +391,9 @@ XYZenumerateTraceGuids(PTRACE_GUID_PROPERTIES* GuidPropertiesArray,
                     }
                 }
 
-                RtlFreeHeap(HeapHandle, 0, OutBuffer);
+                // Cleanup
+                if (OutBuffer)
+                    RtlFreeHeap(HeapHandle, 0, OutBuffer);
                 if (ErrorCode)
                     RtlSetLastWin32Error(ErrorCode);
             }
@@ -397,5 +406,66 @@ XYZenumerateTraceGuids(PTRACE_GUID_PROPERTIES* GuidPropertiesArray,
         RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
         ErrorCode = ERROR_INVALID_PARAMETER;
     }
+    return ErrorCode;
+}
+
+ULONG
+WINAPI
+XYZenumerateTraceGuidsEx(TRACE_QUERY_INFO_CLASS TraceQueryInfoClass,
+                         PVOID InBuffer,
+                         ULONG InBufferSize,
+                         PVOID OutBuffer,
+                         ULONG OutBufferSize,
+                         PULONG ReturnLength)
+{
+    NTSTATUS Status;
+    ULONG ErrorCode, FunctionCode, returnLength;
+
+    if (!ReturnLength)
+    {
+        RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
+        return ERROR_INVALID_PARAMETER;
+    }
+
+    switch (TraceQueryInfoClass)
+    {
+    case TraceGuidQueryList:
+        FunctionCode = TraceControlGetTraceGuidList;
+        break;
+
+    case TraceGuidQueryInfo:
+        FunctionCode = TraceControlGetTraceGuidInfo;
+        break;
+
+    case TraceGroupQueryList:
+        FunctionCode = TraceControlGetTraceGroupList;
+        break;
+
+    case TraceGroupQueryInfo:
+        FunctionCode = TraceControlGetTraceGroupInfo;
+        break;
+
+    case TraceMaxLoggersQuery:
+        FunctionCode = TraceControlMaxLoggers;
+        break;
+
+    default:
+        FunctionCode = INFINITE;
+    }
+
+    Status = NtTraceControl(FunctionCode,
+                            InBuffer,
+                            InBufferSize,
+                            OutBuffer,
+                            OutBufferSize,
+                            &returnLength);
+
+    // Return length to caller
+    *ReturnLength = returnLength;
+
+    if (Status)
+        ErrorCode = RtlNtStatusToDosError(Status);
+    else
+        ErrorCode = 0;
     return ErrorCode;
 }

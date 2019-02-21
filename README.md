@@ -22,14 +22,15 @@ Download the executable from [Release Page](https://github.com/Biswa96/TraceEven
 Usage: TraceEvent.exe [--] [option] [argument]
 Options:
 
+    -E,  --enumguidinfo                      Enumerate registered trace GUIDs with all PID and Logger ID. 
     -e,  --enumguid                          Enumerate registered trace GUIDs. 
     -g,  --guid        <ProviderGUID>        Add Event Provider GUID with trace session. 
-    -L,  --list                              List all trace sessions. 
+    -L,  --list                              List all registered trace sessions with details. 
     -l,  --log         <LoggerName>          Log events in real time. 
     -q,  --query       <LoggerName>          Query status of <LoggerName> trace session. 
     -S,  --start       <LoggerName>          Starts the <LoggerName> trace session. 
     -s,  --stop        <LoggerName>          Stops the <LoggerName> trace session. 
-    -h,  --help                              Display usage information. 
+    -h,  --help                              Display this usage information. 
 ```
 
 ### Start a session
@@ -78,7 +79,8 @@ Thanks to:
 
 * ProcessHacker's collection of [native API header file](https://github.com/processhacker/processhacker/tree/master/phnt) 
 * wbenny's [pedbex](https://github.com/wbenny/pdbex) tool 
-* [RedPlait Blog: NtTraceControl](https://redplait.blogspot.com/2011/02/nttracecontrol.html) 
+* RedPlait Blog: [NtTraceControl](https://redplait.blogspot.com/2011/02/nttracecontrol.html) 
+* Geoff Chappell: [NtTraceControl](http://www.geoffchappell.com/studies/windows/km/ntoskrnl/api/etw/traceapi/control/index.htm) 
 
 ## License
 

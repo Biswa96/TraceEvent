@@ -24,4 +24,13 @@ XYZenumerateTraceGuids(PTRACE_GUID_PROPERTIES* GuidPropertiesArray,
                        ULONG PropertyArrayCount,
                        PULONG GuidCount);
 
+ULONG
+WINAPI
+XYZenumerateTraceGuidsEx(TRACE_QUERY_INFO_CLASS TraceQueryInfoClass,
+                         PVOID InBuffer,
+                         ULONG InBufferSize,
+                         PVOID OutBuffer,
+                         ULONG OutBufferSize,
+                         PULONG ReturnLength);
+
 #endif // SECHOST_H

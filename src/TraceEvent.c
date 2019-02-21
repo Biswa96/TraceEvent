@@ -9,23 +9,24 @@
 #define MAX_SESSION_NAME_LEN (1024 * sizeof (wchar_t))
 #define MAX_LOGFILE_PATH_LEN (1024 * sizeof (wchar_t))
 
-static const size_t BufferSize = sizeof (EVENT_TRACE_PROPERTIES_V2) + MAX_SESSION_NAME_LEN;
+// Global variables
+static ULONG result = INFINITE;
+static PEVENT_TRACE_PROPERTIES_V2 Properties = NULL;
+static const size_t BufferSize = sizeof (*Properties) + MAX_SESSION_NAME_LEN;
 
 ULONG
 WINAPI
 StartSession(PWSTR LoggerName, GUID* ProviderID)
 {
     HANDLE HeapHandle = GetProcessHeap();
-    PEVENT_TRACE_PROPERTIES_V2 Properties = NULL;
-
     Properties = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, BufferSize);
+
     Properties->Wnode.BufferSize = (ULONG)BufferSize;
     Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
     Properties->LogFileMode = EVENT_TRACE_REAL_TIME_MODE;
     Properties->LoggerNameOffset = sizeof (*Properties);
 
     TRACEHANDLE TraceHandle = INFINITE;
-    ULONG result = INFINITE;
     result = XYZstartTraceW(&TraceHandle, LoggerName, Properties);
     Log(result, L"StartTraceW Status:     ");
 
@@ -59,7 +60,9 @@ StartSession(PWSTR LoggerName, GUID* ProviderID)
         wprintf(L"ERROR: Failed to enable Guid: %ls\n", &Guid);
     }
 
-    RtlFreeHeap(HeapHandle, 0, Properties);
+    // Cleanup
+    if (Properties)
+        RtlFreeHeap(HeapHandle, 0, Properties);
     return result;
 }
 
@@ -84,7 +87,6 @@ ConsumeEvent(PWSTR LoggerName)
         return 0;
     }
 
-    ULONG result = INFINITE;
     result = ProcessTrace(&TraceHandle, 1, NULL, NULL);
     if (result != ERROR_SUCCESS)
         Log(result, L"ProcessTrace Status:    ");
@@ -97,13 +99,11 @@ WINAPI
 StopSession(PWSTR LoggerName)
 {
     HANDLE HeapHandle = GetProcessHeap();
-    PEVENT_TRACE_PROPERTIES_V2 Properties = NULL;
     Properties = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, BufferSize);
 
     Properties->Wnode.BufferSize = (ULONG)BufferSize;
     Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
 
-    ULONG result = INFINITE;
     result = XYZcontrolTraceW(0, LoggerName, Properties, EVENT_TRACE_CONTROL_STOP);
     Log(result, L"ControlTraceW Status:   ");
 
@@ -115,7 +115,9 @@ StopSession(PWSTR LoggerName)
     else
         wprintf(L"The \"%ls\" session has not been stopped\n", LoggerName);
 
-    RtlFreeHeap(HeapHandle, 0, Properties);
+    // Cleanup
+    if (Properties)
+        RtlFreeHeap(HeapHandle, 0, Properties);
     return result;
 }
 
@@ -124,20 +126,20 @@ WINAPI
 QuerySession(PWSTR LoggerName)
 {
     HANDLE HeapHandle = GetProcessHeap();
-    PEVENT_TRACE_PROPERTIES_V2 Properties = NULL;
     Properties = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, BufferSize);
 
     Properties->Wnode.BufferSize = (ULONG)BufferSize;
     Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
 
-    ULONG result = INFINITE;
     result = XYZcontrolTraceW(0, LoggerName, Properties, EVENT_TRACE_CONTROL_QUERY);
 
     Log(result, L"ControlTraceW Status:   ");
     if (result == ERROR_SUCCESS)
         PrintTraceProperties(Properties);
 
-    RtlFreeHeap(HeapHandle, 0, Properties);
+    // Cleanup
+    if (Properties)
+        RtlFreeHeap(HeapHandle, 0, Properties);
     return result;
 }
 
@@ -147,9 +149,8 @@ ListSessions(void)
 {
     HANDLE HeapHandle = GetProcessHeap();
     ULONG EtwpMaxLoggers;
-    ULONG result = EtwpCacheMaxLogger(&EtwpMaxLoggers);
+    result = EtwpCacheMaxLogger(&EtwpMaxLoggers);
 
-    PEVENT_TRACE_PROPERTIES_V2 Properties = NULL;
     Properties = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, BufferSize);
 
     for (TRACEHANDLE i = 0; i < EtwpMaxLoggers; i++)
@@ -164,7 +165,9 @@ ListSessions(void)
             PrintTraceProperties(Properties);
     };
 
-    RtlFreeHeap(HeapHandle, 0, Properties);
+    // Cleanup
+    if(Properties)
+        RtlFreeHeap(HeapHandle, 0, Properties);
     return result;
 }
 
@@ -179,7 +182,6 @@ EnumGuids(void)
 
     pProviders = RtlAllocateHeap(HeapHandle, 0, sizeof pProviders);
 
-    ULONG result= INFINITE;
     result = XYZenumerateTraceGuids(pProviders, PropertyArrayCount, &GuidCount);
 
     if (result == ERROR_MORE_DATA && GuidCount)
@@ -232,6 +234,115 @@ EnumGuids(void)
     else
         Log(result, L"EnumerateTraceGuids Status:   ");
 
-    RtlFreeHeap(HeapHandle, 0, pProviders);
-    RtlFreeHeap(HeapHandle, 0, pProviderProperties);
+    // Cleanup
+    if(pProviders)
+        RtlFreeHeap(HeapHandle, 0, pProviders);
+    if(pProviderProperties)
+        RtlFreeHeap(HeapHandle, 0, pProviderProperties);
+}
+
+void
+WINAPI
+EnumGuidsInfo(void)
+{
+    ULONG GuidCount = 0, GuidListSize = 0;
+    ULONG InfoListSize = 0, RequiredListSize = 0;
+    wchar_t GuidString[GUID_STRING];
+
+    HANDLE HeapHandle = GetProcessHeap();
+    GUID* pGuids = NULL;
+    PTRACE_GUID_INFO pInfo = NULL;
+    PTRACE_PROVIDER_INSTANCE_INFO pInstance = NULL;
+    PTRACE_ENABLE_INFO pEnable = NULL;
+
+    pGuids = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, sizeof (char));
+
+    while (TRUE)
+    {
+        result = XYZenumerateTraceGuidsEx(TraceGuidQueryList,
+                                          NULL,
+                                          0,
+                                          pGuids,
+                                          GuidListSize,
+                                          &RequiredListSize);
+        GuidListSize = RequiredListSize;
+
+        if (result == ERROR_SUCCESS)
+            break;
+
+        GUID* pTemp = RtlReAllocateHeap(HeapHandle,
+                                        HEAP_ZERO_MEMORY,
+                                        pGuids,
+                                        RequiredListSize);
+        pGuids = pTemp;
+        pTemp = NULL;
+    }
+
+    if (result == ERROR_SUCCESS)
+    {
+        pInfo = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, sizeof (char));
+        GuidCount = GuidListSize / sizeof (*pGuids);
+
+        for (ULONG i = 0; i < GuidCount; i++)
+        {
+            GuidToString(&pGuids[i], GuidString);
+            wprintf(L"\n%ls\n", GuidString);
+
+            while (TRUE)
+            {
+                result = XYZenumerateTraceGuidsEx(TraceGuidQueryInfo,
+                                                  &pGuids[i],
+                                                  sizeof pGuids[i],
+                                                  pInfo,
+                                                  InfoListSize,
+                                                  &RequiredListSize);
+                InfoListSize = RequiredListSize;
+
+                if (result == ERROR_SUCCESS)
+                    break;
+
+                PTRACE_GUID_INFO pTemp = RtlReAllocateHeap(HeapHandle,
+                                                           HEAP_ZERO_MEMORY,
+                                                           pInfo,
+                                                           RequiredListSize);
+                pInfo = pTemp;
+                pTemp = NULL;
+            }
+
+            if (result == ERROR_SUCCESS)
+            {
+                pInstance = (PTRACE_PROVIDER_INSTANCE_INFO)((PBYTE)pInfo + sizeof (*pInfo));
+
+                for (ULONG j = 0; j < pInfo->InstanceCount; j++)
+                {
+                    wprintf(L"\tPID %lu\n", pInstance->Pid);
+
+                    if (pInstance->EnableCount > 0)
+                    {
+                        pEnable = (PTRACE_ENABLE_INFO)((PBYTE)pInstance + sizeof (*pInstance));
+
+                        for (ULONG k = 0; k < pInstance->EnableCount; k++)
+                        {
+                            wprintf(L"\t\tLoggerId: %hu\n", pEnable->LoggerId);
+                            ++pEnable;
+                        }
+                    }
+
+                    pInstance = (PTRACE_PROVIDER_INSTANCE_INFO)((PBYTE)pInstance + pInstance->NextOffset);
+                }
+            }
+            else
+                Log(result, L"EnumerateTraceGuidsEx(TraceGuidQueryInfo) Status: ");
+        }
+
+        wprintf(L"\nTotal Event Providers: %lu\n", GuidCount);
+    }
+    else
+        Log(result, L"EnumerateTraceGuidsEx(TraceGuidQueryList) Status: ");
+
+    // Cleanup
+    if (pGuids)
+        RtlFreeHeap(HeapHandle, 0, pGuids);
+    if (pInfo)
+        RtlFreeHeap(HeapHandle, 0, pInfo);
 }

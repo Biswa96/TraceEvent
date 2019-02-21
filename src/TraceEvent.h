@@ -25,4 +25,8 @@ void
 WINAPI
 EnumGuids(void);
 
+void
+WINAPI
+EnumGuidsInfo(void);
+
 #endif //TRACEVENT_H

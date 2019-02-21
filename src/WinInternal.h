@@ -134,7 +134,7 @@ typedef struct _EVENT_TRACE_SESSION_SECURITY_INFORMATION {
     SECURITY_DESCRIPTOR SecurityDescriptor[1];
 } EVENT_TRACE_SESSION_SECURITY_INFORMATION, *PEVENT_TRACE_SESSION_SECURITY_INFORMATION;
 
-// Extracted from ntoskrnl
+// Hand-made from ntoskrnl!NtTraceControl
 typedef enum _TRACE_CONTROL_FUNCTION_CLASS {
     TraceControlStartLogger = 1,
     TraceControlStopLogger = 2,

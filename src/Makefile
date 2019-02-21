@@ -4,7 +4,7 @@ NAME := TraceEvent
 BINDIR = ../bin
 CC = gcc
 CFLAGS := -ggdb -m64 -Wall -Wextra
-LIBS := -lAdvapi32 -lNtdll -lTdh -lShell32 -lKernel32
+LIBS := -lAdvapi32 -lNtdll -lTdh -lShell32
 SOURCES := $(wildcard *.c)
 OBJECTS := $(SOURCES:.c=.obj)
 BINS := $(patsubst %.obj,$(BINDIR)/%.obj,$(OBJECTS))

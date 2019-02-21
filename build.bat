@@ -12,8 +12,8 @@ set CFLAGS=/c /nologo /O1 /MD /W4 /Fo%BINDIR%\\
 set LFLAGS=/nologo /MACHINE:X64
 set LIBS=Advapi32.lib Ntdll.lib Tdh.lib Shell32.lib
 
-::Other compiler options
-set CCOPT=/D_CRT_SECURE_NO_WARNINGS /wd"4201"
+:: Disable MSVC warnings
+set CCOPT=/wd"4201" /wd"4214"
 
 ::Build
 rd /s /q %BINDIR%

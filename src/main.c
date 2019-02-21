@@ -22,10 +22,11 @@ main(void)
     GUID ProviderID = { 0 };
     BOOLEAN Start = FALSE;
     PWSTR LoggerName = NULL;
-    PCWSTR OptionString = L"eg:hLl:q:S:s:";
+    PCWSTR OptionString = L"Eeg:hLl:q:S:s:";
 
     // Option Table
     const struct option OptionTable[] = {
+        { L"enumguidinfo",  no_argument,         0,  'E' },
         { L"enumguid",      no_argument,         0,  'e' },
         { L"guid",          required_argument,   0,  'g' },
         { L"help",          no_argument,         0,  'h' },
@@ -45,6 +46,10 @@ main(void)
         case 0:
             wprintf(L"Try 'TraceEvent.exe --help' for more information.\n");
             Usage();
+            break;
+
+        case 'E':
+            EnumGuidsInfo();
             break;
 
         case 'e':
