@@ -3,10 +3,10 @@
 #include <sddl.h>
 #include "Log.h"
 
-#define SEC_INFO   ( OWNER_SECURITY_INFORMATION \
-                   | GROUP_SECURITY_INFORMATION \
-                   | DACL_SECURITY_INFORMATION \
-                   | SACL_SECURITY_INFORMATION )
+#define SEC_INFO   ( OWNER_SECURITY_INFORMATION |\
+                     GROUP_SECURITY_INFORMATION |\
+                     DACL_SECURITY_INFORMATION  |\
+                     SACL_SECURITY_INFORMATION )
 
 ULONG
 WINAPI
@@ -69,9 +69,10 @@ PrintTraceProperties(PEVENT_TRACE_PROPERTIES_V2 Properties)
     wprintf(L"Logger Id:              0x%I64x\n", Properties->Wnode.HistoricalContext);
     wprintf(L"Logger Thread Id:       %p\n", Properties->LoggerThreadId);
 
-    wchar_t GuidString[GUID_STRING];
-    GuidToString(&Properties->Wnode.Guid, GuidString);
-    wprintf(L"Guid:                   %ls\n", GuidString);
+    UNICODE_STRING GuidString;
+    RtlStringFromGUID(&Properties->Wnode.Guid, &GuidString);
+    wprintf(L"Guid:                   %ls\n", GuidString.Buffer);
+    RtlFreeUnicodeString(&GuidString);
 
     PrintSessionSecurityInfo(Properties->Wnode.HistoricalContext);
 

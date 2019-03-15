@@ -115,17 +115,10 @@ XYZstartTraceW(PTRACEHANDLE TraceHandle,
 
     EtwpCopyPropertiesToInfo(Properties, WmiLogInfo);
     WmiLogInfo->Wnode.Flags |= WNODE_FLAG_TRACED_GUID;
-
-    WmiLogInfo->LoggerName.Length = (USHORT)(sizeof (wchar_t) * InstnaceNameLength);
-    WmiLogInfo->LoggerName.MaximumLength = (USHORT)(sizeof (wchar_t) * (InstnaceNameLength + 1));
-    WmiLogInfo->LoggerName.Buffer = InstanceName;
-
+    RtlInitUnicodeString(&WmiLogInfo->LoggerName, InstanceName);
     if (IsLogFilePresent)
-    {
-        WmiLogInfo->LogFileName.Length = (USHORT)(sizeof (wchar_t) * LogFileNameLength);
-        WmiLogInfo->LogFileName.MaximumLength = (USHORT)(sizeof (wchar_t) * (LogFileNameLength + 1));
-        WmiLogInfo->LogFileName.Buffer = LogFileName;
-    }
+        RtlInitUnicodeString(&WmiLogInfo->LogFileName, LogFileName);
+
 
     NTSTATUS Status;
     Status = NtTraceControl(TraceControlStartLogger,
@@ -244,20 +237,10 @@ XYZcontrolTraceW(TRACEHANDLE TraceHandle,
     EtwpCopyPropertiesToInfo(Properties, WmiLogInfo);
     WmiLogInfo->Wnode.Flags |= WNODE_FLAG_TRACED_GUID;
     WmiLogInfo->Wnode.HistoricalContext = TraceHandle;
-
     if (InstanceName)
-    {
-        WmiLogInfo->LoggerName.Length = (USHORT)(sizeof (wchar_t) * InstnaceNameLength);
-        WmiLogInfo->LoggerName.MaximumLength = (USHORT)(sizeof (wchar_t) * (InstnaceNameLength + 1));
-        WmiLogInfo->LoggerName.Buffer = InstanceName;
-    }
-
+        RtlInitUnicodeString(&WmiLogInfo->LoggerName, InstanceName);
     if (IsLogFilePresent)
-    {
-        WmiLogInfo->LogFileName.Length = (USHORT)(sizeof (wchar_t) * LogFileNameLength);
-        WmiLogInfo->LogFileName.MaximumLength = (USHORT)(sizeof (wchar_t) * (LogFileNameLength + 1));
-        WmiLogInfo->LogFileName.Buffer = LogFileName;
-    }
+        RtlInitUnicodeString(&WmiLogInfo->LogFileName, LogFileName);
 
     // Convert ControlCode to Function code for NtTraceControl
     ULONG FunctionCode;

@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include "WinInternal.h"
 #include "Log.h"
 #include "TraceEvent.h"
 #include <stdio.h>
@@ -18,8 +18,12 @@ main(void)
         return 0;
     }
 
-    int c, bRes;
-    GUID ProviderID = { 0 };
+    int c = 0;
+    NTSTATUS Status;
+    GUID ProviderID;
+    UNICODE_STRING GuidString;
+    RtlZeroMemory(&ProviderID, sizeof ProviderID);
+
     BOOLEAN Start = FALSE;
     PWSTR LoggerName = NULL;
     PCWSTR OptionString = L"Eeg:hLl:q:S:s:";
@@ -57,12 +61,10 @@ main(void)
             break;
 
         case 'g':
-            bRes = guid_from_string(optarg, &ProviderID);
-            if (!bRes)
-            {
-                ProviderID = (GUID){ 0 };
+            RtlInitUnicodeString(&GuidString, optarg);
+            Status = RtlGUIDFromString(&GuidString, &ProviderID);
+            if (!NT_SUCCESS(Status))
                 wprintf(L"Enter Provider GUID correctly\n");
-            }
             break;
 
         case 'L':
@@ -102,4 +104,7 @@ main(void)
         else
             wprintf(L"Event Provider GUID is not added, use '--guid' option to add.\n");
     }
+
+    // Cleanup
+    RtlFreeUnicodeString(&GuidString);
 }

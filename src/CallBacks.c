@@ -149,16 +149,11 @@ ULONG
 WINAPI
 BufferCallback(PEVENT_TRACE_LOGFILEW LogFile)
 {
-    SYSTEMTIME st;
-    FileTimeToSystemTime((PFILETIME)&LogFile->CurrentTime, &st);
-
     // Increment Counting variables
     TotalLost += LogFile->EventsLost;
     ++BlockNumber;
 
-    wprintf(L"\n%02d/%02d/%04d-%02d:%02d:%02d.%03d :: %8d: Filled=%8d, Lost=%3d TotalLost= %d\r",
-            st.wMonth, st.wDay, st.wYear,
-            st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
+    wprintf(L"\n%lu: Filled=%8lu, Lost=%3lu TotalLost= %lu\r",
             BlockNumber, LogFile->Filled, LogFile->EventsLost, TotalLost);
 
     return TRUE;

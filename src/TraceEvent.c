@@ -12,7 +12,7 @@
 // Global variables
 static ULONG result = INFINITE;
 static PEVENT_TRACE_PROPERTIES_V2 Properties = NULL;
-static const size_t BufferSize = sizeof (*Properties) + MAX_SESSION_NAME_LEN;
+static const ULONG BufferSize = sizeof (*Properties) + MAX_SESSION_NAME_LEN;
 
 ULONG
 WINAPI
@@ -21,7 +21,7 @@ StartSession(PWSTR LoggerName, GUID* ProviderID)
     HANDLE HeapHandle = GetProcessHeap();
     Properties = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, BufferSize);
 
-    Properties->Wnode.BufferSize = (ULONG)BufferSize;
+    Properties->Wnode.BufferSize = BufferSize;
     Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
     Properties->LogFileMode = EVENT_TRACE_REAL_TIME_MODE;
     Properties->LoggerNameOffset = sizeof (*Properties);
@@ -55,9 +55,10 @@ StartSession(PWSTR LoggerName, GUID* ProviderID)
     }
     else
     {
-        wchar_t Guid[GUID_STRING];
-        GuidToString(ProviderID, Guid);
-        wprintf(L"ERROR: Failed to enable Guid: %ls\n", &Guid);
+        UNICODE_STRING GuidString;
+        RtlStringFromGUID(ProviderID, &GuidString);
+        wprintf(L"ERROR: Failed to enable Guid: %ls\n", GuidString.Buffer);
+        RtlFreeUnicodeString(&GuidString);
     }
 
     // Cleanup
@@ -101,7 +102,7 @@ StopSession(PWSTR LoggerName)
     HANDLE HeapHandle = GetProcessHeap();
     Properties = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, BufferSize);
 
-    Properties->Wnode.BufferSize = (ULONG)BufferSize;
+    Properties->Wnode.BufferSize = BufferSize;
     Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
 
     result = XYZcontrolTraceW(0, LoggerName, Properties, EVENT_TRACE_CONTROL_STOP);
@@ -128,7 +129,7 @@ QuerySession(PWSTR LoggerName)
     HANDLE HeapHandle = GetProcessHeap();
     Properties = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, BufferSize);
 
-    Properties->Wnode.BufferSize = (ULONG)BufferSize;
+    Properties->Wnode.BufferSize = BufferSize;
     Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
 
     result = XYZcontrolTraceW(0, LoggerName, Properties, EVENT_TRACE_CONTROL_QUERY);
@@ -156,7 +157,7 @@ ListSessions(void)
     for (TRACEHANDLE i = 0; i < EtwpMaxLoggers; i++)
     {
         RtlZeroMemory(Properties, BufferSize);
-        Properties->Wnode.BufferSize = (ULONG)BufferSize;
+        Properties->Wnode.BufferSize = BufferSize;
         Properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID | WNODE_FLAG_VERSIONED_PROPERTIES;
 
         result = XYZcontrolTraceW(i, NULL, Properties, EVENT_TRACE_CONTROL_QUERY);
@@ -178,7 +179,7 @@ EnumGuids(void)
     HANDLE HeapHandle = GetProcessHeap();
     PTRACE_GUID_PROPERTIES pProviderProperties = NULL, *pProviders = NULL, *pTemp = NULL;
     ULONG GuidCount = 0, PropertyArrayCount = 0, Enabled = 0, Size = 0;
-    wchar_t GuidString[GUID_STRING];
+    UNICODE_STRING GuidString;
 
     pProviders = RtlAllocateHeap(HeapHandle, 0, sizeof pProviders);
 
@@ -207,10 +208,10 @@ EnumGuids(void)
 
             for (ULONG i = 0; i < GuidCount; i++)
             {
-                GuidToString(&pProviders[i]->Guid, GuidString);
+                RtlStringFromGUID(&pProviders[i]->Guid, &GuidString);
 
                 wprintf(L"%ls     %5ls",
-                        GuidString,
+                        GuidString.Buffer,
                         pProviders[i]->IsEnable ? L"TRUE" : L"FALSE");
 
                 if (pProviders[i]->IsEnable)
@@ -235,6 +236,7 @@ EnumGuids(void)
         Log(result, L"EnumerateTraceGuids Status:   ");
 
     // Cleanup
+    RtlFreeUnicodeString(&GuidString);
     if(pProviders)
         RtlFreeHeap(HeapHandle, 0, pProviders);
     if(pProviderProperties)
@@ -247,7 +249,7 @@ EnumGuidsInfo(void)
 {
     ULONG GuidCount = 0, GuidListSize = 0;
     ULONG InfoListSize = 0, RequiredListSize = 0;
-    wchar_t GuidString[GUID_STRING];
+    UNICODE_STRING GuidString;
 
     HANDLE HeapHandle = GetProcessHeap();
     GUID* pGuids = NULL;
@@ -285,8 +287,8 @@ EnumGuidsInfo(void)
 
         for (ULONG i = 0; i < GuidCount; i++)
         {
-            GuidToString(&pGuids[i], GuidString);
-            wprintf(L"\n%ls\n", GuidString);
+            RtlStringFromGUID(&pGuids[i], &GuidString);
+            wprintf(L"\n%ls\n", GuidString.Buffer);
 
             while (TRUE)
             {
@@ -341,6 +343,7 @@ EnumGuidsInfo(void)
         Log(result, L"EnumerateTraceGuidsEx(TraceGuidQueryList) Status: ");
 
     // Cleanup
+    RtlFreeUnicodeString(&GuidString);
     if (pGuids)
         RtlFreeHeap(HeapHandle, 0, pGuids);
     if (pInfo)

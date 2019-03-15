@@ -205,6 +205,20 @@ RtlFreeHeap(HANDLE HeapHandle,
             ULONG Flags,
             PVOID P);
 
+void
+NTAPI
+RtlFreeUnicodeString(PUNICODE_STRING UnicodeString);
+
+NTSTATUS
+NTAPI
+RtlGUIDFromString(PUNICODE_STRING GuidString,
+                  GUID* Guid);
+
+void
+NTAPI
+RtlInitUnicodeString(PUNICODE_STRING DestinationString,
+                     PCWSTR SourceString);
+
 PVOID
 NTAPI
 RtlReAllocateHeap(HANDLE Heap,
@@ -215,6 +229,11 @@ RtlReAllocateHeap(HANDLE Heap,
 void
 NTAPI
 RtlSetLastWin32Error(ULONG LastError);
+
+NTSTATUS
+NTAPI
+RtlStringFromGUID(GUID* Guid,
+                  PUNICODE_STRING GuidString);
 
 ULONG
 NTAPI

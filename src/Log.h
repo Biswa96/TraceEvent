@@ -1,15 +1,5 @@
-#ifndef FUNCTIONS_H
-#define FUNCTIONS_H
-
-#define GUID_STRING 40
-
-int
-WINAPI
-guid_from_string(PWSTR s, GUID* id);
-
-void
-WINAPI
-GuidToString(GUID* id, PWSTR string);
+#ifndef LOG_H
+#define LOG_H
 
 void
 WINAPI
@@ -19,4 +9,4 @@ void
 WINAPI
 Usage(void);
 
-#endif //FUNCTIONS_H
+#endif // LOG_H
