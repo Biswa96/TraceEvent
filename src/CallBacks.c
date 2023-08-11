@@ -23,19 +23,19 @@ WINAPI
 GetMapInfo(PEVENT_RECORD EventRecord,
            PWCHAR MapName,
            ULONG DecodingSource,
-           PEVENT_MAP_INFO EventMapInfo)
+           PEVENT_MAP_INFO* EventMapInfo)
 {
     ULONG MapSize = 0;
     HANDLE HeapHandle = GetProcessHeap();
 
-    ULONG result = TdhGetEventMapInformation(EventRecord, MapName, EventMapInfo, &MapSize);
-    EventMapInfo = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, MapSize);
-    result = TdhGetEventMapInformation(EventRecord, MapName, EventMapInfo, &MapSize);
+    ULONG result = TdhGetEventMapInformation(EventRecord, MapName, *EventMapInfo, &MapSize);
+    *EventMapInfo = RtlAllocateHeap(HeapHandle, HEAP_ZERO_MEMORY, MapSize);
+    result = TdhGetEventMapInformation(EventRecord, MapName, *EventMapInfo, &MapSize);
 
     if (result == ERROR_SUCCESS)
     {
         if (DecodingSource == DecodingSourceXMLFile)
-            RemoveTrailingSpace(EventMapInfo);
+            RemoveTrailingSpace(*EventMapInfo);
     }
 }
 
@@ -97,7 +97,7 @@ EventRecordCallback(PEVENT_RECORD EventRecord)
                 EventRecord,
                 (PWCHAR)((PBYTE)(EventInfo) +EventInfo->EventPropertyInfoArray[i].nonStructType.MapNameOffset),
                 EventInfo->DecodingSource,
-                EventMapInfo);
+                &EventMapInfo);
 
             result = TdhFormatProperty(
                 EventInfo,
