@@ -44,7 +44,7 @@ void
 WINAPI
 EventRecordCallback(PEVENT_RECORD EventRecord)
 {
-    PEVENT_MAP_INFO EventMapInfo = NULL;
+    //PEVENT_MAP_INFO EventMapInfo = NULL;
     PBYTE EndOfUserData = (PBYTE)EventRecord->UserData + EventRecord->UserDataLength;
     PBYTE UserData = (PBYTE)EventRecord->UserData;
     ULONG FormattedDataSize = 0;
@@ -93,15 +93,15 @@ EventRecordCallback(PEVENT_RECORD EventRecord)
             wprintf(L"%ls:",
                 (PWCHAR)((PBYTE)(EventInfo) +EventInfo->EventPropertyInfoArray[i].NameOffset));
 
-            GetMapInfo(
-                EventRecord,
-                (PWCHAR)((PBYTE)(EventInfo) +EventInfo->EventPropertyInfoArray[i].nonStructType.MapNameOffset),
-                EventInfo->DecodingSource,
-                &EventMapInfo);
+            //GetMapInfo(
+            //    EventRecord,
+            //    (PWCHAR)((PBYTE)(EventInfo) +EventInfo->EventPropertyInfoArray[i].nonStructType.MapNameOffset),
+            //    EventInfo->DecodingSource,
+            //    &EventMapInfo);
 
             result = TdhFormatProperty(
                 EventInfo,
-                EventMapInfo,
+                NULL, // EventMapInfo
                 sizeof(PVOID),
                 EventInfo->EventPropertyInfoArray[i].nonStructType.InType,
                 EventInfo->EventPropertyInfoArray[i].nonStructType.OutType,
@@ -116,7 +116,7 @@ EventRecordCallback(PEVENT_RECORD EventRecord)
 
             result = TdhFormatProperty(
                 EventInfo,
-                EventMapInfo,
+                NULL, // EventMapInfo
                 sizeof(PVOID),
                 EventInfo->EventPropertyInfoArray[i].nonStructType.InType,
                 EventInfo->EventPropertyInfoArray[i].nonStructType.OutType,
@@ -138,7 +138,7 @@ EventRecordCallback(PEVENT_RECORD EventRecord)
     // Cleanup
     wprintf(L"\n");
     RtlFreeHeap(HeapHandle, 0, EventInfo);
-    RtlFreeHeap(HeapHandle, 0, EventMapInfo);
+    //RtlFreeHeap(HeapHandle, 0, EventMapInfo);
     RtlFreeHeap(HeapHandle, 0, FormattedData);
 }
 
