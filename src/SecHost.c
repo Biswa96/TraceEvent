@@ -38,7 +38,7 @@ XYZstartTraceW(PTRACEHANDLE TraceHandle,
                PEVENT_TRACE_PROPERTIES_V2 Properties)
 {
     ULONG FilterDescCount, ReturnedLength, LastError;
-    ULONG InstnaceNameLength = INFINITE, LogFileNameLength = INFINITE, BufferSize = 0;
+    ULONG InstanceNameLength = INFINITE, LogFileNameLength = INFINITE, BufferSize = 0;
     BOOLEAN IsLogFilePresent;
     PEVENT_FILTER_DESCRIPTOR FilterDesc = NULL;
     PWSTR LogFileName = NULL;
@@ -71,9 +71,9 @@ XYZstartTraceW(PTRACEHANDLE TraceHandle,
 
     do
     {
-        ++InstnaceNameLength;
-    } while (InstanceName[InstnaceNameLength]);
-    BufferSize = ReturnedLength + (sizeof (wchar_t) * (InstnaceNameLength + 1));
+        ++InstanceNameLength;
+    } while (InstanceName[InstanceNameLength]);
+    BufferSize = ReturnedLength + (sizeof (wchar_t) * (InstanceNameLength + 1));
 
     if (Properties->LogFileNameOffset <= 0)
     {
@@ -143,7 +143,7 @@ XYZstartTraceW(PTRACEHANDLE TraceHandle,
             LogFileNameOffset = Properties->Wnode.BufferSize;
         Diff = LogFileNameOffset - LoggerNameOffset;
 
-        if (sizeof (wchar_t) * (InstnaceNameLength + 1) <= Diff)
+        if (sizeof (wchar_t) * (InstanceNameLength + 1) <= Diff)
             StringCbCopyW((PWSTR)((PBYTE)Properties + LoggerNameOffset), Diff, InstanceName);
 
         if (LogFileNameOffset > LoggerNameOffset)
@@ -168,7 +168,7 @@ XYZcontrolTraceW(TRACEHANDLE TraceHandle,
                  ULONG ControlCode)
 {
     ULONG FilterDescCount, ReturnedLength, LastError;
-    ULONG InstnaceNameLength = INFINITE, LogFileNameLength = INFINITE, BufferSize = 0;
+    ULONG InstanceNameLength = INFINITE, LogFileNameLength = INFINITE, BufferSize = 0;
     BOOLEAN IsLogFilePresent;
     PEVENT_FILTER_DESCRIPTOR FilterDesc = NULL;
     PWSTR LogFileName = NULL;
@@ -206,12 +206,12 @@ XYZcontrolTraceW(TRACEHANDLE TraceHandle,
 
         do
         {
-            ++InstnaceNameLength;
-        } while (InstanceName[InstnaceNameLength]);
-        BufferSize = ReturnedLength + (sizeof (wchar_t) * (InstnaceNameLength + 1));
+            ++InstanceNameLength;
+        } while (InstanceName[InstanceNameLength]);
+        BufferSize = ReturnedLength + (sizeof (wchar_t) * (InstanceNameLength + 1));
     }
     else
-        InstnaceNameLength = 0;
+        InstanceNameLength = 0;
 
     if (Properties->LogFileNameOffset <= 0)
     {
@@ -293,7 +293,7 @@ XYZcontrolTraceW(TRACEHANDLE TraceHandle,
             LogFileNameOffset = Properties->Wnode.BufferSize;
         Diff = LogFileNameOffset - LoggerNameOffset;
 
-        if (sizeof (wchar_t) * (InstnaceNameLength + 1) <= Diff)
+        if (InstanceName && (sizeof (wchar_t) * (InstanceNameLength + 1) <= Diff) )
             StringCbCopyW((PWSTR)((PBYTE)Properties + LoggerNameOffset), Diff, InstanceName);
 
         if (LogFileNameOffset > LoggerNameOffset)
